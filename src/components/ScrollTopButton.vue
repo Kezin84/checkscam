@@ -54,10 +54,10 @@ onBeforeUnmount(() => {
   justify-content: center;
   padding: 0;
   border-radius: var(--r-md);
-  border: 1px solid var(--p-line-strong);
-  background: var(--p-card);
-  color: var(--p-ink);
-  box-shadow: 0 8px 22px rgba(24, 37, 43, 0.12);
+  border: 1px solid var(--p-action);
+  background: var(--p-action);
+  color: var(--p-action-ink);
+  box-shadow: 0 8px 22px rgba(13, 116, 128, 0.28);
   cursor: pointer;
   opacity: 0;
   visibility: hidden;
@@ -85,8 +85,8 @@ onBeforeUnmount(() => {
 
 @media (hover: hover) and (pointer: fine) {
   .scroll-top-btn.is-visible:hover {
-    background: var(--p-action);
-    border-color: var(--p-action);
+    background: var(--p-accent-hover);
+    border-color: var(--p-accent-hover);
     color: var(--p-action-ink);
     transform: translateY(-2px);
     transition-duration: var(--m-in);
