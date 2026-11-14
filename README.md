@@ -1,6 +1,6 @@
-# CheckGD — Cổng tra cứu số tài khoản ngân hàng & Shop đã xác minh
+# CheckGD — Cổng tra cứu Shop Việt tại Philippines & Cảnh báo lừa đảo
 
-Ứng dụng **Vue 3 + Vite + Firebase Realtime Database + Cloudinary** phục vụ tra cứu nhanh số tài khoản ngân hàng, liên kết mạng xã hội (Facebook, Zalo, TikTok, Telegram, Shopee, Instagram...), hồ sơ cảnh báo lừa đảo và danh sách shop đã xác minh.
+Ứng dụng **Vue 3 + Vite + Firebase Realtime Database + Cloudinary** phục vụ cộng đồng người Việt tại Philippines tra cứu nhanh thông tin Shop Việt đã xác minh, đối chiếu số tài khoản ngân hàng / ví GCash, liên kết mạng xã hội (Telegram, Facebook, Zalo, TikTok...) và hồ sơ cảnh báo lừa đảo.
 
 ## Chạy dự án tại máy
 

@@ -8,10 +8,10 @@ const year = new Date().getFullYear()
       <div class="closing__top">
         <div class="closing__statement">
           <h2 class="closing__heading">
-            Đối chiếu số tài khoản trước mỗi lần bấm chuyển tiền.
+            Kiểm tra kỹ thông tin Shop Việt tại Philippines trước mỗi lần chuyển tiền.
           </h2>
           <p class="closing__sub">
-            Phát hiện tài khoản nhận tiền có dấu hiệu lừa đảo hoặc mạo danh shop? Gửi bằng chứng để cảnh báo cộng đồng sau khi quản trị viên kiểm duyệt.
+            Phát hiện đối tượng mạo danh Shop Việt tại Philippines, lừa đổi Peso - VND hoặc chiếm đoạt tiền cọc? Gửi bằng chứng để cảnh báo cộng đồng sau khi quản trị viên kiểm duyệt.
           </p>
         </div>
         <div class="closing__cta">
@@ -34,7 +34,7 @@ const year = new Date().getFullYear()
             <span>CheckGD</span>
           </div>
           <p class="closing__note">
-            Cổng tra cứu số tài khoản ngân hàng, liên kết mạng xã hội và danh bạ shop đã xác minh phục vụ giao dịch trực tuyến an toàn.
+            Cổng tra cứu thông tin Shop Việt uy tín tại Philippines, hỗ trợ đối chiếu số tài khoản ngân hàng, ví GCash, liên kết mạng xã hội và cảnh báo lừa đảo phục vụ cộng đồng người Việt tại Philippines.
           </p>
         </div>
 
@@ -75,7 +75,7 @@ const year = new Date().getFullYear()
             >
               t.me/dakv88
             </a>
-            <span class="closing__col-hint">Hỗ trợ xác minh shop & phản hồi hồ sơ.</span>
+            <span class="closing__col-hint">Hỗ trợ xác minh Shop Việt tại Philippines &amp; phản hồi hồ sơ.</span>
           </div>
         </div>
       </div>

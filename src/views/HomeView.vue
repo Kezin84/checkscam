@@ -125,17 +125,19 @@ const {
     <!-- Screen 1: Centered Hero -->
     <section class="hero-centred" aria-labelledby="hero-heading">
       <div class="wrap hero-centred__inner">
+        <span class="stamp enter-rise-1">Cộng đồng người Việt tại Philippines</span>
+
         <h1 id="hero-heading" class="hero-centred__h1 enter-rise-1">
-          Tra cứu số tài khoản và hồ sơ shop trước khi chuyển tiền.
+          Tra cứu thông tin Shop Việt tại Philippines trước khi giao dịch.
         </h1>
 
         <p class="hero-centred__lead enter-rise-2">
-          Nhập số tài khoản ngân hàng, số điện thoại Zalo, username hoặc dán liên kết mạng xã hội để đối chiếu dữ liệu tố cáo và tài khoản chính chủ của shop.
+          Nhập số tài khoản ngân hàng, ví GCash, @username Telegram, số điện thoại Zalo hoặc dán link Facebook để đối chiếu danh bạ Shop Việt đã xác minh tại Philippines và dữ liệu cảnh báo lừa đảo.
         </p>
 
         <form class="search-bar enter-rise-3" role="search" @submit.prevent="executeSearch">
           <label for="main-lookup-input" class="sr-only">
-            Nhập số tài khoản, số điện thoại, username hoặc link mạng xã hội
+            Nhập số tài khoản, số GCash, số điện thoại, username hoặc link mạng xã hội
           </label>
           <div class="search-bar__box">
             <svg class="search-bar__icon" viewBox="0 0 20 20" width="18" height="18" fill="none" aria-hidden="true">
@@ -148,7 +150,7 @@ const {
               v-model="searchInput"
               type="search"
               class="search-bar__input"
-              placeholder="Nhập STK, SĐT, username hoặc dán link Facebook, TikTok..."
+              placeholder="Nhập STK, số GCash, SĐT, @telegram hoặc dán link Facebook..."
               autocomplete="off"
             />
 
@@ -179,7 +181,7 @@ const {
           </div>
 
           <div class="search-bar__hints">
-            <span>Hỗ trợ tự động lọc mã UID từ link Facebook di động, chuẩn hóa đầu số +84 và bỏ khoảng trắng số tài khoản.</span>
+            <span>Hỗ trợ đối chiếu Shop Việt tại Philippines (đổi Peso - VND, đồ Việt, vé máy bay, trung gian...) · Tự động lọc UID Facebook và chuẩn hóa đầu số +84 / +63.</span>
           </div>
         </form>
       </div>
@@ -291,33 +293,33 @@ const {
         <div class="section-head">
           <div class="section-head__copy">
             <h2 id="protocol-h">
-              Ba nguyên tắc kiểm tra trước khi chuyển khoản.
+              Ba nguyên tắc kiểm tra khi giao dịch với Shop Việt tại Philippines.
             </h2>
           </div>
         </div>
 
         <div class="grid">
           <article class="card span-4 protocol-card">
-            <span class="mono protocol-card__step">01 / Ngân hàng</span>
-            <h3>Đối chiếu đúng số tài khoản nhận tiền</h3>
+            <span class="mono protocol-card__step">01 / Ngân hàng &amp; GCash</span>
+            <h3>Đối chiếu đúng STK hoặc số GCash nhận tiền</h3>
             <p>
-              Kẻ giả mạo thường lập Fanpage giống hệt shop thật nhưng đưa số tài khoản cá nhân khác lúc thanh toán. Luôn tra cứu chính dãy số tài khoản nhận tiền.
+              Kẻ mạo danh thường sao chép y hệt tên và ảnh các Shop Việt uy tín tại Philippines (đổi Peso - VND, vé máy bay, tạp hóa Việt...) nhưng gửi STK hoặc GCash lạ khi thanh toán.
             </p>
           </article>
 
           <article class="card span-4 protocol-card">
             <span class="mono protocol-card__step">02 / Định danh MXH</span>
-            <h3>Kiểm tra liên kết gốc thay vì ảnh đại diện</h3>
+            <h3>Kiểm tra đúng @username Telegram, Zalo &amp; UID gốc</h3>
             <p>
-              Tên hiển thị và ảnh đại diện có thể sao chép trong một phút, nhưng UID Facebook, username và số điện thoại Zalo là định danh duy nhất để phát hiện nick ảo.
+              Giao dịch tại Philippines phần lớn diễn ra qua Telegram và Facebook. Tên hiển thị rất dễ làm giả, hãy đối chiếu chính xác mã ID và đường dẫn gốc của shop trước khi chuyển tiền.
             </p>
           </article>
 
           <article class="card span-4 protocol-card">
             <span class="mono protocol-card__step">03 / Bằng chứng thực</span>
-            <h3>Lưu lại biên lai và đường dẫn trang cá nhân</h3>
+            <h3>Chụp lại biên lai &amp; tin nhắn trước khi bị thu hồi</h3>
             <p>
-              Chụp màn hình đoạn hội thoại, mã giao dịch ngân hàng và sao chép link trang cá nhân trước khi bị chặn để gửi báo cáo cảnh báo kịp thời.
+              Trên Telegram kẻ gian có thể xóa trắng lịch sử chat hai chiều bất cứ lúc nào. Hãy lưu ảnh chụp màn hình biên lai và @username ngay khi giao dịch để kịp gửi cảnh báo.
             </p>
           </article>
         </div>
@@ -357,7 +359,7 @@ const {
 }
 
 .hero-centred__h1 {
-  max-width: 20ch;
+  max-width: 23ch;
 }
 
 .hero-centred__lead {

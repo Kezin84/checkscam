@@ -43,10 +43,10 @@ const {
     <div class="wrap">
       <div class="page-head">
         <div class="page-head__copy">
-          <span class="label">Cơ sở dữ liệu cảnh báo</span>
+          <span class="label">Cảnh báo cộng đồng Việt tại Philippines</span>
           <h1>Hồ sơ tố cáo lừa đảo đã kiểm duyệt</h1>
           <p class="muted measure">
-            Toàn bộ hồ sơ dưới đây đã được đối chiếu hình ảnh biên lai chuyển khoản, đoạn hội thoại và thông tin định danh trước khi công bố.
+            Tổng hợp các đối tượng mạo danh Shop Việt tại Philippines, lừa đổi tiền Peso - VND, nhận cọc ảo hoặc lừa đảo giao dịch đã được đối chiếu biên lai và thông tin định danh trước khi công bố.
           </p>
         </div>
         <RouterLink to="/report" class="btn btn--primary">

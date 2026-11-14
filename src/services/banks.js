@@ -23,7 +23,13 @@ const FALLBACK_BANKS = [
   { code: 'TIMO', shortName: 'Timo', name: 'Ngân hàng số Timo by Ban Viet', logo: 'https://api.vietqr.io/img/TIMO.png' },
   { code: 'MOMO', shortName: 'Ví MoMo', name: 'Ví điện tử MoMo', logo: '' },
   { code: 'ZALOPAY', shortName: 'ZaloPay', name: 'Ví điện tử ZaloPay', logo: '' },
-  { code: 'VIETTELMONEY', shortName: 'Viettel Money', name: 'Hệ sinh thái tài chính số Viettel Money', logo: '' }
+  { code: 'VIETTELMONEY', shortName: 'Viettel Money', name: 'Hệ sinh thái tài chính số Viettel Money', logo: '' },
+  { code: 'GCASH', shortName: 'GCash (PH)', name: 'Ví điện tử GCash Philippines', logo: '' },
+  { code: 'MAYA', shortName: 'Maya (PH)', name: 'Ví điện tử & Ngân hàng số Maya Philippines', logo: '' },
+  { code: 'BDO', shortName: 'BDO (PH)', name: 'BDO Unibank Philippines', logo: '' },
+  { code: 'BPI', shortName: 'BPI (PH)', name: 'Bank of the Philippine Islands', logo: '' },
+  { code: 'UBP', shortName: 'UnionBank (PH)', name: 'Union Bank of the Philippines', logo: '' },
+  { code: 'GOTYME', shortName: 'GoTyme (PH)', name: 'GoTyme Bank Philippines', logo: '' }
 ]
 
 const banksRef = ref([...FALLBACK_BANKS])

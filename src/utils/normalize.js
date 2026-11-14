@@ -11,24 +11,24 @@ export const PLATFORMS = [
 ]
 
 export const SCAM_TYPES = [
-  'Nhận tiền rồi chặn liên lạc, không giao hàng',
-  'Giả mạo shop uy tín hoặc giả mạo trung gian',
-  'Chỉnh sửa ảnh biên lai chuyển khoản giả (fake bill)',
-  'Bán tài khoản game / dịch vụ số rồi thu hồi lại',
-  'Lừa tiền đặt cọc đơn hàng hoặc phòng nghỉ',
-  'Tuyển cộng tác viên làm nhiệm vụ chuyển khoản',
-  'Cho vay tiền online thu phí hồ sơ trước',
-  'Kêu gọi đầu tư tài chính / tiền số lừa đảo'
+  'Lừa đổi tiền Peso - VND (nhận tiền rồi chặn Telegram/Zalo)',
+  'Giả mạo Shop Việt uy tín hoặc trung gian tại Philippines',
+  'Chỉnh sửa ảnh biên lai chuyển khoản / bill GCash giả',
+  'Nhận tiền đặt hàng / đồ ăn Việt rồi chặn liên lạc',
+  'Lừa tiền cọc thuê Condo / phòng trọ hoặc vé máy bay',
+  'Bán tài khoản / dịch vụ số rồi thu hồi lại',
+  'Tuyển dụng / môi giới việc làm lừa đảo tại Philippines',
+  'Kêu gọi góp vốn / đầu tư tài chính lừa đảo'
 ]
 
 export const SHOP_CATEGORIES = [
-  'Trung gian giao dịch',
-  'Tài khoản số & phần mềm',
-  'Mua bán tài khoản game',
-  'Thiết bị công nghệ & phụ kiện',
-  'Thời trang & mỹ phẩm',
-  'Dịch vụ mạng xã hội & thiết kế',
-  'Đặt phòng & vé du lịch',
+  'Đổi tiền Peso - VND & Chuyển tiền',
+  'Trung gian giao dịch tại Philippines',
+  'Ẩm thực, đồ ăn & tạp hóa Việt',
+  'Vé máy bay, Visa & Du lịch PH',
+  'Thuê căn hộ / Condo & Phòng trọ',
+  'Sim thẻ, Thiết bị công nghệ & Dịch vụ số',
+  'Thời trang, Mỹ phẩm & Hàng xách tay',
   'Lĩnh vực kinh doanh khác'
 ]
 
@@ -74,6 +74,10 @@ export function normalizePhone(str = '') {
   if (clean.startsWith('+84')) {
     clean = '0' + clean.slice(3)
   } else if (clean.startsWith('84') && clean.length === 11) {
+    clean = '0' + clean.slice(2)
+  } else if (clean.startsWith('+63')) {
+    clean = '0' + clean.slice(3)
+  } else if (clean.startsWith('63') && clean.length === 12) {
     clean = '0' + clean.slice(2)
   }
   return clean

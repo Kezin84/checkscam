@@ -50,10 +50,10 @@ const {
     <div class="wrap">
       <div class="page-head">
         <div class="page-head__copy">
-          <span class="label">Danh bạ uy tín</span>
-          <h1>Shop và trung gian đã xác minh</h1>
+          <span class="label">Danh bạ Shop Việt tại Philippines</span>
+          <h1>Shop Việt và trung gian đã xác minh tại Philippines</h1>
           <p class="muted measure">
-            Danh sách các đơn vị đã được quản trị viên xác minh thông tin chủ sở hữu, kênh mạng xã hội chính thức và số tài khoản ngân hàng chính chủ.
+            Danh sách các Shop Việt hoạt động tại Philippines (đổi tiền Peso - VND, đồ ăn &amp; tạp hóa Việt, đặt vé, thuê Condo, trung gian giao dịch...) đã được xác minh kênh liên hệ chính thức và tài khoản nhận tiền chính chủ.
           </p>
         </div>
         <a

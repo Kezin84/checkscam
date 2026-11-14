@@ -6,25 +6,25 @@ const routes = [
     path: '/',
     name: 'home',
     component: HomeView,
-    meta: { title: 'CheckGD: Tra cứu số tài khoản ngân hàng và hồ sơ shop giao dịch' }
+    meta: { title: 'CheckGD: Tra cứu Shop Việt tại Philippines & Cảnh báo lừa đảo' }
   },
   {
     path: '/shops',
     name: 'shops',
     component: () => import('@/views/TrustedShopsView.vue'),
-    meta: { title: 'Shop đã xác minh — CheckGD' }
+    meta: { title: 'Shop Việt đã xác minh tại Philippines — CheckGD' }
   },
   {
     path: '/alerts',
     name: 'alerts',
     component: () => import('@/views/AlertsView.vue'),
-    meta: { title: 'Hồ sơ cảnh báo lừa đảo — CheckGD' }
+    meta: { title: 'Cảnh báo lừa đảo cộng đồng Việt tại Philippines — CheckGD' }
   },
   {
     path: '/report',
     name: 'report',
     component: () => import('@/views/SubmitReportView.vue'),
-    meta: { title: 'Gửi hồ sơ tố cáo lừa đảo — CheckGD' }
+    meta: { title: 'Gửi hồ sơ tố cáo lừa đảo — CheckGD Philippines' }
   },
   {
     path: '/admin',
