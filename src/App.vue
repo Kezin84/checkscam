@@ -2,6 +2,7 @@
 import { Analytics } from '@vercel/analytics/vue'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
+import ScrollTopButton from '@/components/ScrollTopButton.vue'
 </script>
 
 <template>
@@ -11,6 +12,7 @@ import AppFooter from '@/components/AppFooter.vue'
     <RouterView />
   </main>
   <AppFooter />
+  <ScrollTopButton />
 </template>
 
 <style scoped>
