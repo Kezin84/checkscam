@@ -1,0 +1,278 @@
+<script setup>
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+</script>
+
+<template>
+  <header class="nav-bar">
+    <div class="wrap nav-bar__inner">
+      <a class="skip-link" href="#top">Chuyển tới nội dung chính</a>
+
+      <RouterLink to="/" class="nav-brand" aria-label="CheckGD Trang chủ">
+        <span class="nav-brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+            <rect width="24" height="24" rx="4" fill="#1f3038" />
+            <path d="M6.8 12.2L10.3 15.7L17.4 8.6" stroke="#f7f9fa" stroke-width="2.1" stroke-linecap="square" />
+          </svg>
+        </span>
+        <span class="nav-brand__word">CheckGD</span>
+      </RouterLink>
+
+      <nav class="nav-links" aria-label="Điều hướng chính">
+        <RouterLink
+          to="/"
+          class="nav-links__item"
+          :aria-current="route.path === '/' ? 'page' : undefined"
+        >
+          Tra cứu
+        </RouterLink>
+        <RouterLink
+          to="/shops"
+          class="nav-links__item"
+          :aria-current="route.path === '/shops' ? 'page' : undefined"
+        >
+          Shop xác minh
+        </RouterLink>
+        <RouterLink
+          to="/alerts"
+          class="nav-links__item"
+          :aria-current="route.path === '/alerts' ? 'page' : undefined"
+        >
+          Hồ sơ cảnh báo
+        </RouterLink>
+        <a
+          href="https://t.me/dakv88"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="nav-links__item"
+        >
+          Liên hệ
+        </a>
+      </nav>
+
+      <div class="nav-actions">
+        <RouterLink to="/report" class="btn btn--primary nav-actions__cta">
+          <span>Gửi tố cáo</span>
+          <svg class="m-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M3 8H13M9 4L13 8L9 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" />
+          </svg>
+        </RouterLink>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Dock Bottom Bar -->
+  <nav class="mobile-dock" aria-label="Điều hướng di động">
+    <RouterLink
+      to="/"
+      class="mobile-dock__item"
+      :aria-current="route.path === '/' ? 'page' : undefined"
+    >
+      <svg viewBox="0 0 20 20" width="19" height="19" fill="none" aria-hidden="true">
+        <circle cx="8.8" cy="8.8" r="5.6" stroke="currentColor" stroke-width="1.7" />
+        <path d="M13.2 13.2L17.2 17.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" />
+      </svg>
+      <span>Tra cứu</span>
+    </RouterLink>
+
+    <RouterLink
+      to="/shops"
+      class="mobile-dock__item"
+      :aria-current="route.path === '/shops' ? 'page' : undefined"
+    >
+      <svg viewBox="0 0 20 20" width="19" height="19" fill="none" aria-hidden="true">
+        <path
+          d="M10 2.4L16.2 4.8V9.8C16.2 13.7 13.5 16.5 10 17.8C6.5 16.5 3.8 13.7 3.8 9.8V4.8L10 2.4Z"
+          stroke="currentColor"
+          stroke-width="1.6"
+        />
+        <path d="M7.3 10.1L9.2 12L13 8.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" />
+      </svg>
+      <span>Shop uy tín</span>
+    </RouterLink>
+
+    <RouterLink
+      to="/alerts"
+      class="mobile-dock__item"
+      :aria-current="route.path === '/alerts' ? 'page' : undefined"
+    >
+      <svg viewBox="0 0 20 20" width="19" height="19" fill="none" aria-hidden="true">
+        <path d="M10 3L17.6 16.4H2.4L10 3Z" stroke="currentColor" stroke-width="1.6" />
+        <path d="M10 8V11.6M10 13.9V14.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" />
+      </svg>
+      <span>Cảnh báo</span>
+    </RouterLink>
+
+    <RouterLink
+      to="/report"
+      class="mobile-dock__item"
+      :aria-current="route.path === '/report' ? 'page' : undefined"
+    >
+      <svg viewBox="0 0 20 20" width="19" height="19" fill="none" aria-hidden="true">
+        <rect x="3.2" y="3.2" width="13.6" height="13.6" rx="2.5" stroke="currentColor" stroke-width="1.6" />
+        <path d="M10 6.8V13.2M6.8 10H13.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" />
+      </svg>
+      <span>Tố cáo</span>
+    </RouterLink>
+
+    <a
+      href="https://t.me/dakv88"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="mobile-dock__item"
+    >
+      <svg viewBox="0 0 20 20" width="19" height="19" fill="none" aria-hidden="true">
+        <path
+          d="M16.8 3.6L14.3 15.8C14.1 16.5 13.6 16.7 13 16.3L9.4 13.7L7.7 15.3C7.5 15.5 7.3 15.6 7 15.6L7.3 11.9L14 5.9C14.3 5.6 13.9 5.5 13.5 5.7L5.2 10.9L1.7 9.8C1 9.6 1 9 1.9 8.7L15.7 3.3C16.3 3.1 16.9 3.4 16.8 3.6Z"
+          stroke="currentColor"
+          stroke-width="1.45"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <span>Liên hệ</span>
+    </a>
+  </nav>
+</template>
+
+<style scoped>
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav);
+  z-index: 40;
+  background: var(--p-bg);
+  border-bottom: 1px solid var(--p-line);
+}
+
+.nav-bar__inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-5);
+}
+
+.nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.nav-brand__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-brand__word {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--p-ink);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.nav-links__item {
+  position: relative;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--p-muted);
+  padding: 6px 0;
+  white-space: nowrap;
+  background-image: linear-gradient(var(--p-ink), var(--p-ink));
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: color var(--m-out) var(--ease), background-size var(--m-out) var(--ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .nav-links__item:hover {
+    color: var(--p-ink);
+    background-size: 100% 1px;
+    transition-duration: var(--m-in);
+  }
+}
+
+.nav-links__item[aria-current="page"] {
+  color: var(--p-ink);
+  background-size: 100% 2px;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Mobile Dock Bottom Bar (hidden on desktop) */
+.mobile-dock {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .nav-links,
+  .nav-actions {
+    display: none;
+  }
+
+  .mobile-dock {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    max-width: 500px;
+    margin-inline: auto;
+    padding: 6px;
+    background: var(--p-card);
+    border: 1px solid var(--p-line-strong);
+    border-radius: var(--r-lg);
+    box-shadow: 0 10px 28px rgba(24, 37, 43, 0.16);
+    z-index: 45;
+  }
+
+  .mobile-dock__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 52px;
+    padding: 6px 2px;
+    border-radius: var(--r-md);
+    color: var(--p-muted);
+    font-size: 11.5px;
+    font-weight: 500;
+    line-height: 1.15;
+    text-align: center;
+    white-space: nowrap;
+    transition:
+      background-color var(--m-out) var(--ease),
+      color var(--m-out) var(--ease),
+      transform var(--m-press) var(--ease);
+  }
+
+  .mobile-dock__item:active {
+    transform: scale(0.96);
+  }
+
+  .mobile-dock__item[aria-current="page"] {
+    background: var(--p-accent-soft);
+    color: var(--p-action);
+    font-weight: 600;
+  }
+}
+</style>

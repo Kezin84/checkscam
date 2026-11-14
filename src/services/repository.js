@@ -1,0 +1,638 @@
+import { ref as vueRef } from 'vue'
+import {
+  ref as dbRef,
+  onValue,
+  get,
+  push,
+  set,
+  update,
+  remove,
+  query,
+  orderByKey,
+  startAt,
+  endAt,
+  endBefore,
+  limitToFirst,
+  limitToLast,
+  runTransaction
+} from 'firebase/database'
+import { db } from './firebase'
+import {
+  buildSearchPayload,
+  buildIndexTokens,
+  extractQueryPlan,
+  matchRecord,
+  toSafeIndexKey,
+  normalizeAccountNumber,
+  normalizeAccountHolder,
+  extractSocialIdentifier
+} from '@/utils/normalize'
+
+// Lightweight global metadata (~300 bytes) instead of downloading entire DB
+const siteMeta = vueRef({
+  reportsCount: 0,
+  shopsCount: 0,
+  shopCategories: []
+})
+const metaLoading = vueRef(true)
+
+// Admin pending submissions queue (small unreviewed queue, admin-only)
+const pendingReports = vueRef([])
+const pendingLoading = vueRef(false)
+
+let metaSubscribed = false
+let pendingUnsubscribe = null
+
+function snapshotToList(snap) {
+  const val = snap.val()
+  if (!val || typeof val !== 'object') return []
+  return Object.entries(val)
+    .map(([id, item]) => ({
+      id,
+      ...item
+    }))
+    .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
+}
+
+function orderedSnapToDescList(snap) {
+  const asc = []
+  snap.forEach((child) => {
+    const val = child.val()
+    if (val && typeof val === 'object') {
+      asc.push({ id: child.key, ...val })
+    }
+  })
+  return asc.reverse()
+}
+
+function parseSiteMeta(raw) {
+  if (!raw || typeof raw !== 'object') {
+    return { reportsCount: 0, shopsCount: 0, shopCategories: [] }
+  }
+  const catObj = raw.shopCategories && typeof raw.shopCategories === 'object' ? raw.shopCategories : {}
+  const shopCategories = Object.entries(catObj)
+    .map(([key, val]) => ({
+      key,
+      label: String(val?.label || key).trim(),
+      count: Number(val?.count || 0)
+    }))
+    .filter((c) => c.label && c.count > 0)
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, 'vi'))
+
+  return {
+    reportsCount: Math.max(0, Number(raw.reportsCount || 0)),
+    shopsCount: Math.max(0, Number(raw.shopsCount || 0)),
+    shopCategories
+  }
+}
+
+export function initSiteMetaListener() {
+  if (metaSubscribed) return
+  metaSubscribed = true
+
+  onValue(
+    dbRef(db, 'site_meta'),
+    (snap) => {
+      siteMeta.value = parseSiteMeta(snap.val())
+      metaLoading.value = false
+    },
+    () => {
+      metaLoading.value = false
+    }
+  )
+}
+
+async function fetchRecordById(collection, id) {
+  try {
+    const snap = await get(dbRef(db, `${collection}/${id}`))
+    if (!snap.exists()) return null
+    return { id: snap.key, ...snap.val() }
+  } catch {
+    return null
+  }
+}
+
+// Paginated server fetch for /alerts and Admin reports tab
+export async function fetchReportsPage({ batchSize = 6, cursorKey = null, platform = 'all' } = {}) {
+  if (platform && platform !== 'all') {
+    const platKey = toSafeIndexKey(platform)
+    const constraints = [
+      orderByKey(),
+      ...(cursorKey ? [endBefore(cursorKey)] : []),
+      limitToLast(batchSize + 1)
+    ]
+    const idxSnap = await get(query(dbRef(db, `plat_index/${platKey}`), ...constraints))
+    const ascKeys = []
+    idxSnap.forEach((child) => {
+      if (child.val()) ascKeys.push(child.key)
+    })
+    const descKeys = ascKeys.reverse()
+    const hasMore = descKeys.length > batchSize
+    const pageKeys = hasMore ? descKeys.slice(0, batchSize) : descKeys
+    const nextCursor = hasMore && pageKeys.length ? pageKeys[pageKeys.length - 1] : null
+
+    const loaded = await Promise.all(pageKeys.map((id) => fetchRecordById('scam_reports', id)))
+    return {
+      items: loaded.filter(Boolean),
+      hasMore,
+      nextCursor
+    }
+  }
+
+  const constraints = [
+    orderByKey(),
+    ...(cursorKey ? [endBefore(cursorKey)] : []),
+    limitToLast(batchSize + 1)
+  ]
+  const snap = await get(query(dbRef(db, 'scam_reports'), ...constraints))
+  const desc = orderedSnapToDescList(snap)
+  const hasMore = desc.length > batchSize
+  const items = hasMore ? desc.slice(0, batchSize) : desc
+  const nextCursor = hasMore && items.length ? items[items.length - 1].id : null
+
+  return { items, hasMore, nextCursor }
+}
+
+// Paginated server fetch for /shops and Admin shops tab
+export async function fetchShopsPage({ batchSize = 6, cursorKey = null, category = 'all' } = {}) {
+  if (category && category !== 'all') {
+    const catKey = toSafeIndexKey(category)
+    const constraints = [
+      orderByKey(),
+      ...(cursorKey ? [endBefore(cursorKey)] : []),
+      limitToLast(batchSize + 1)
+    ]
+    const idxSnap = await get(query(dbRef(db, `cat_index/${catKey}`), ...constraints))
+    const ascKeys = []
+    idxSnap.forEach((child) => {
+      if (child.val()) ascKeys.push(child.key)
+    })
+    const descKeys = ascKeys.reverse()
+    const hasMore = descKeys.length > batchSize
+    const pageKeys = hasMore ? descKeys.slice(0, batchSize) : descKeys
+    const nextCursor = hasMore && pageKeys.length ? pageKeys[pageKeys.length - 1] : null
+
+    const loaded = await Promise.all(pageKeys.map((id) => fetchRecordById('trusted_shops', id)))
+    return {
+      items: loaded.filter(Boolean),
+      hasMore,
+      nextCursor
+    }
+  }
+
+  const constraints = [
+    orderByKey(),
+    ...(cursorKey ? [endBefore(cursorKey)] : []),
+    limitToLast(batchSize + 1)
+  ]
+  const snap = await get(query(dbRef(db, 'trusted_shops'), ...constraints))
+  const desc = orderedSnapToDescList(snap)
+  const hasMore = desc.length > batchSize
+  const items = hasMore ? desc.slice(0, batchSize) : desc
+  const nextCursor = hasMore && items.length ? items[items.length - 1].id : null
+
+  return { items, hasMore, nextCursor }
+}
+
+// On-demand server lookup via lookup_index: ONLY runs when user searches
+export async function searchRecordsOnServer(
+  rawQuery,
+  {
+    includeReports = true,
+    includeShops = true,
+    platform = 'all',
+    category = 'all',
+    maxCandidates = 24
+  } = {}
+) {
+  const trimmed = String(rawQuery || '').trim()
+  if (!trimmed) return { reports: [], shops: [] }
+
+  const plan = extractQueryPlan(trimmed)
+  const scoreMap = new Map() // entityKey ('report_<id>' | 'shop_<id>') -> score
+
+  const bump = (entityKey, pts) => {
+    if (!entityKey || typeof entityKey !== 'string') return
+    if (entityKey.startsWith('report_') && !includeReports) return
+    if (entityKey.startsWith('shop_') && !includeShops) return
+    scoreMap.set(entityKey, (scoreMap.get(entityKey) || 0) + pts)
+  }
+
+  const exactLookupKeys = Array.from(new Set(plan.exactKeys))
+  const wordLookupKeys = plan.wordKeys.filter((k) => !exactLookupKeys.includes(k))
+
+  const tasks = [
+    ...exactLookupKeys.map(async (k) => {
+      const snap = await get(dbRef(db, `lookup_index/${k}`))
+      const val = snap.val()
+      if (val && typeof val === 'object') {
+        for (const entityKey of Object.keys(val)) bump(entityKey, 10)
+      }
+    }),
+    ...wordLookupKeys.map(async (k) => {
+      const snap = await get(dbRef(db, `lookup_index/${k}`))
+      const val = snap.val()
+      if (val && typeof val === 'object') {
+        for (const entityKey of Object.keys(val)) bump(entityKey, 4)
+      }
+    })
+  ]
+
+  if (plan.prefixKey) {
+    tasks.push(
+      (async () => {
+        const snap = await get(
+          query(
+            dbRef(db, 'lookup_index'),
+            orderByKey(),
+            startAt(plan.prefixKey),
+            endAt(plan.prefixKey + '\uf8ff'),
+            limitToFirst(15)
+          )
+        )
+        const buckets = snap.val()
+        if (buckets && typeof buckets === 'object') {
+          for (const bucket of Object.values(buckets)) {
+            if (bucket && typeof bucket === 'object') {
+              for (const entityKey of Object.keys(bucket)) bump(entityKey, 2)
+            }
+          }
+        }
+      })()
+    )
+  }
+
+  await Promise.all(tasks)
+
+  const rankedEntities = Array.from(scoreMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, maxCandidates)
+    .map(([entityKey]) => entityKey)
+
+  const reportIds = []
+  const shopIds = []
+  for (const ek of rankedEntities) {
+    if (ek.startsWith('report_')) reportIds.push(ek.slice('report_'.length))
+    else if (ek.startsWith('shop_')) shopIds.push(ek.slice('shop_'.length))
+  }
+
+  const [rawReports, rawShops] = await Promise.all([
+    Promise.all(reportIds.map((id) => fetchRecordById('scam_reports', id))),
+    Promise.all(shopIds.map((id) => fetchRecordById('trusted_shops', id)))
+  ])
+
+  const targetCat = category !== 'all' ? String(category).trim().toLowerCase() : ''
+
+  const reports = rawReports
+    .filter(Boolean)
+    .filter((rep) => {
+      if (platform !== 'all') {
+        return (rep.socials || []).some((s) => s.platform === platform)
+      }
+      return true
+    })
+    .map((item) => ({ item, match: matchRecord(item, trimmed) }))
+    .filter((entry) => entry.match.matched)
+    .sort((a, b) => a.match.rank - b.match.rank || Number(b.item.createdAt || 0) - Number(a.item.createdAt || 0))
+
+  const shops = rawShops
+    .filter(Boolean)
+    .filter((shop) => {
+      if (targetCat) {
+        return String(shop.category || '').trim().toLowerCase() === targetCat
+      }
+      return true
+    })
+    .map((item) => ({ item, match: matchRecord(item, trimmed) }))
+    .filter((entry) => entry.match.matched)
+    .sort((a, b) => a.match.rank - b.match.rank || Number(b.item.createdAt || 0) - Number(a.item.createdAt || 0))
+
+  return { reports, shops }
+}
+
+export function subscribePendingReports() {
+  if (pendingUnsubscribe) return
+  pendingLoading.value = true
+  pendingUnsubscribe = onValue(
+    dbRef(db, 'pending_reports'),
+    (snap) => {
+      pendingReports.value = snapshotToList(snap)
+      pendingLoading.value = false
+    },
+    () => {
+      pendingLoading.value = false
+    }
+  )
+}
+
+export function unsubscribePendingReports() {
+  if (typeof pendingUnsubscribe === 'function') {
+    pendingUnsubscribe()
+    pendingUnsubscribe = null
+  }
+}
+
+function sanitizeBankAccounts(bankAccounts = []) {
+  return (Array.isArray(bankAccounts) ? bankAccounts : [])
+    .map((b) => ({
+      bankCode: String(b.bankCode || '').trim(),
+      bankName: String(b.bankName || '').trim(),
+      bankLogo: String(b.bankLogo || '').trim(),
+      accountNumber: normalizeAccountNumber(b.accountNumber || ''),
+      accountHolder: normalizeAccountHolder(b.accountHolder || '')
+    }))
+    .filter((b) => b.accountNumber || b.accountHolder || b.bankCode)
+}
+
+function sanitizeSocials(socials = []) {
+  return (Array.isArray(socials) ? socials : [])
+    .map((s) => {
+      const rawUrl = String(s.url || '').trim()
+      const parsed = extractSocialIdentifier(rawUrl || s.usernameOrPhone || '')
+      return {
+        platform: String(s.platform || 'facebook').trim(),
+        accountName: String(s.accountName || '').trim(),
+        usernameOrPhone: String(s.usernameOrPhone || parsed.handle || '').trim(),
+        url: rawUrl
+      }
+    })
+    .filter((s) => s.usernameOrPhone || s.url || s.accountName)
+}
+
+function sanitizeLinks(links = []) {
+  return (Array.isArray(links) ? links : [])
+    .map((l) => String(l || '').trim())
+    .filter(Boolean)
+}
+
+export function prepareScamReportPayload(raw, existingCreatedAt = null) {
+  const bankAccounts = sanitizeBankAccounts(raw.bankAccounts)
+  const socials = sanitizeSocials(raw.socials)
+  const subjectName =
+    String(raw.subjectName || '').trim() ||
+    socials[0]?.accountName ||
+    bankAccounts[0]?.accountHolder ||
+    'Chưa rõ tên hiển thị'
+
+  const base = {
+    subjectName,
+    scamType: String(raw.scamType || '').trim(),
+    scamAmount: Number(String(raw.scamAmount || '').replace(/[^\d]/g, '')) || 0,
+    description: String(raw.description || '').trim(),
+    bankAccounts,
+    socials,
+    evidenceImages: sanitizeLinks(raw.evidenceImages),
+    exposeLinks: sanitizeLinks(raw.exposeLinks),
+    createdAt: existingCreatedAt || Date.now(),
+    updatedAt: Date.now()
+  }
+
+  const searchMeta = buildSearchPayload(base)
+  const indexKeys = buildIndexTokens(base)
+  const platKeys = Array.from(new Set(socials.map((s) => toSafeIndexKey(s.platform)).filter(Boolean)))
+
+  return {
+    ...base,
+    ...searchMeta,
+    indexKeys,
+    platKeys
+  }
+}
+
+export function prepareTrustedShopPayload(raw, existingCreatedAt = null) {
+  const bankAccounts = sanitizeBankAccounts(raw.bankAccounts)
+  const socials = sanitizeSocials(raw.socials)
+  const shopName = String(raw.shopName || '').trim()
+  const category = String(raw.category || '').trim()
+
+  const base = {
+    shopName,
+    ownerName: String(raw.ownerName || '').trim(),
+    avatar: String(raw.avatar || '').trim(),
+    category,
+    categoryKey: toSafeIndexKey(category),
+    description: String(raw.description || '').trim(),
+    verified: true,
+    bankAccounts,
+    socials,
+    createdAt: existingCreatedAt || Date.now(),
+    updatedAt: Date.now()
+  }
+
+  const searchMeta = buildSearchPayload(base)
+  const indexKeys = buildIndexTokens(base)
+
+  return {
+    ...base,
+    ...searchMeta,
+    indexKeys
+  }
+}
+
+// Public submission -> goes into pending_reports (hidden from public listing & lookup_index until approved)
+export async function submitUserPendingReport(raw) {
+  const payload = prepareScamReportPayload(raw)
+  const pendingPayload = {
+    ...payload,
+    reporterName: String(raw.reporterName || '').trim(),
+    reporterContact: String(raw.reporterContact || '').trim()
+  }
+  const newNode = push(dbRef(db, 'pending_reports'))
+  await set(newNode, pendingPayload)
+  return newNode.key
+}
+
+async function adjustSiteMetaForReport(delta) {
+  await runTransaction(dbRef(db, 'site_meta'), (cur) => {
+    const next = cur && typeof cur === 'object' ? { ...cur } : { reportsCount: 0, shopsCount: 0, shopCategories: {} }
+    next.reportsCount = Math.max(0, Number(next.reportsCount || 0) + delta)
+    return next
+  })
+}
+
+async function adjustSiteMetaForShop({ countDelta = 0, oldCatKey = '', newCatKey = '', newCatLabel = '' }) {
+  await runTransaction(dbRef(db, 'site_meta'), (cur) => {
+    const next = cur && typeof cur === 'object' ? { ...cur } : { reportsCount: 0, shopsCount: 0, shopCategories: {} }
+    next.shopsCount = Math.max(0, Number(next.shopsCount || 0) + countDelta)
+    const cats = next.shopCategories && typeof next.shopCategories === 'object' ? { ...next.shopCategories } : {}
+
+    if (oldCatKey && cats[oldCatKey]) {
+      const dec = Number(cats[oldCatKey].count || 1) - 1
+      if (dec <= 0) delete cats[oldCatKey]
+      else cats[oldCatKey] = { ...cats[oldCatKey], count: dec }
+    }
+
+    if (newCatKey && newCatLabel) {
+      const prevCount = Number(cats[newCatKey]?.count || 0)
+      cats[newCatKey] = { label: newCatLabel, count: prevCount + 1 }
+    }
+
+    next.shopCategories = cats
+    return next
+  })
+}
+
+// Admin: approve pending report -> write to scam_reports + lookup_index + plat_index, archive reporter, remove pending
+export async function approvePendingReport(pendingId, editedData) {
+  const publicPayload = prepareScamReportPayload(editedData, editedData.createdAt)
+  const approvedId = push(dbRef(db, 'scam_reports')).key
+
+  const updates = {
+    [`scam_reports/${approvedId}`]: publicPayload,
+    [`pending_reports/${pendingId}`]: null
+  }
+  for (const k of publicPayload.indexKeys) {
+    updates[`lookup_index/${k}/report_${approvedId}`] = 1
+  }
+  for (const p of publicPayload.platKeys) {
+    updates[`plat_index/${p}/${approvedId}`] = true
+  }
+  if (editedData.reporterName || editedData.reporterContact) {
+    updates[`reporter_archive/${approvedId}`] = {
+      reporterName: String(editedData.reporterName || '').trim(),
+      reporterContact: String(editedData.reporterContact || '').trim(),
+      approvedAt: Date.now()
+    }
+  }
+
+  await update(dbRef(db), updates)
+  await adjustSiteMetaForReport(1)
+  return approvedId
+}
+
+export async function rejectPendingReport(pendingId) {
+  await remove(dbRef(db, `pending_reports/${pendingId}`))
+}
+
+// Admin CRUD for scam_reports (atomic index sync)
+export async function saveApprovedReport(raw, reportId = null) {
+  const isNew = !reportId
+  const targetId = reportId || push(dbRef(db, 'scam_reports')).key
+  let oldData = null
+
+  if (!isNew) {
+    const oldSnap = await get(dbRef(db, `scam_reports/${targetId}`))
+    oldData = oldSnap.exists() ? oldSnap.val() : null
+  }
+
+  const payload = prepareScamReportPayload(raw, oldData?.createdAt || raw.createdAt)
+  const updates = {
+    [`scam_reports/${targetId}`]: payload
+  }
+
+  for (const oldKey of oldData?.indexKeys || []) {
+    updates[`lookup_index/${oldKey}/report_${targetId}`] = null
+  }
+  for (const oldPlat of oldData?.platKeys || []) {
+    updates[`plat_index/${oldPlat}/${targetId}`] = null
+  }
+
+  for (const k of payload.indexKeys) {
+    updates[`lookup_index/${k}/report_${targetId}`] = 1
+  }
+  for (const p of payload.platKeys) {
+    updates[`plat_index/${p}/${targetId}`] = true
+  }
+
+  await update(dbRef(db), updates)
+  if (isNew || !oldData) {
+    await adjustSiteMetaForReport(1)
+  }
+  return targetId
+}
+
+export async function deleteApprovedReport(reportId) {
+  const oldSnap = await get(dbRef(db, `scam_reports/${reportId}`))
+  if (!oldSnap.exists()) return
+  const oldData = oldSnap.val()
+
+  const updates = {
+    [`scam_reports/${reportId}`]: null
+  }
+  for (const oldKey of oldData?.indexKeys || []) {
+    updates[`lookup_index/${oldKey}/report_${reportId}`] = null
+  }
+  for (const oldPlat of oldData?.platKeys || []) {
+    updates[`plat_index/${oldPlat}/${reportId}`] = null
+  }
+
+  await update(dbRef(db), updates)
+  await adjustSiteMetaForReport(-1)
+}
+
+// Admin CRUD for trusted_shops (atomic index + category sync)
+export async function saveTrustedShop(raw, shopId = null) {
+  const isNew = !shopId
+  const targetId = shopId || push(dbRef(db, 'trusted_shops')).key
+  let oldData = null
+
+  if (!isNew) {
+    const oldSnap = await get(dbRef(db, `trusted_shops/${targetId}`))
+    oldData = oldSnap.exists() ? oldSnap.val() : null
+  }
+
+  const payload = prepareTrustedShopPayload(raw, oldData?.createdAt || raw.createdAt)
+  const oldCatKey = oldData?.categoryKey || (oldData?.category ? toSafeIndexKey(oldData.category) : '')
+
+  const updates = {
+    [`trusted_shops/${targetId}`]: payload
+  }
+
+  for (const oldKey of oldData?.indexKeys || []) {
+    updates[`lookup_index/${oldKey}/shop_${targetId}`] = null
+  }
+  if (oldCatKey) {
+    updates[`cat_index/${oldCatKey}/${targetId}`] = null
+  }
+
+  for (const k of payload.indexKeys) {
+    updates[`lookup_index/${k}/shop_${targetId}`] = 1
+  }
+  if (payload.categoryKey) {
+    updates[`cat_index/${payload.categoryKey}/${targetId}`] = true
+  }
+
+  await update(dbRef(db), updates)
+  await adjustSiteMetaForShop({
+    countDelta: isNew || !oldData ? 1 : 0,
+    oldCatKey: oldData ? oldCatKey : '',
+    newCatKey: payload.categoryKey,
+    newCatLabel: payload.category
+  })
+  return targetId
+}
+
+export async function deleteTrustedShop(shopId) {
+  const oldSnap = await get(dbRef(db, `trusted_shops/${shopId}`))
+  if (!oldSnap.exists()) return
+  const oldData = oldSnap.val()
+  const oldCatKey = oldData?.categoryKey || (oldData?.category ? toSafeIndexKey(oldData.category) : '')
+
+  const updates = {
+    [`trusted_shops/${shopId}`]: null
+  }
+  for (const oldKey of oldData?.indexKeys || []) {
+    updates[`lookup_index/${oldKey}/shop_${shopId}`] = null
+  }
+  if (oldCatKey) {
+    updates[`cat_index/${oldCatKey}/${shopId}`] = null
+  }
+
+  await update(dbRef(db), updates)
+  await adjustSiteMetaForShop({
+    countDelta: -1,
+    oldCatKey,
+    newCatKey: '',
+    newCatLabel: ''
+  })
+}
+
+export function useRepository() {
+  initSiteMetaListener()
+  return {
+    siteMeta,
+    metaLoading,
+    pendingReports,
+    pendingLoading
+  }
+}

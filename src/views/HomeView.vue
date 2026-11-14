@@ -1,0 +1,579 @@
+<script setup>
+import { ref, watch, nextTick, onMounted, defineAsyncComponent } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { searchRecordsOnServer } from '@/services/repository'
+import { useLazyList } from '@/composables/useLazyList'
+
+const ReportDossierCard = defineAsyncComponent(() => import('@/components/ReportDossierCard.vue'))
+const ShopDossierCard = defineAsyncComponent(() => import('@/components/ShopDossierCard.vue'))
+
+const route = useRoute()
+const router = useRouter()
+
+const searchInput = ref(String(route.query.q || ''))
+const activeQuery = ref(String(route.query.q || '').trim())
+const isSearching = ref(false)
+const matchedReports = ref([])
+const matchedShops = ref([])
+const resultsAnchor = ref(null)
+let searchReqId = 0
+
+async function performServerSearch(q) {
+  const trimmed = String(q || '').trim()
+  if (!trimmed) {
+    matchedReports.value = []
+    matchedShops.value = []
+    isSearching.value = false
+    return
+  }
+
+  const reqId = ++searchReqId
+  isSearching.value = true
+  try {
+    const res = await searchRecordsOnServer(trimmed)
+    if (reqId !== searchReqId) return
+    matchedReports.value = res.reports
+    matchedShops.value = res.shops
+  } finally {
+    if (reqId === searchReqId) isSearching.value = false
+  }
+}
+
+watch(
+  () => route.query.q,
+  (q) => {
+    const val = String(q || '')
+    const trimmed = val.trim()
+    searchInput.value = val
+    if (trimmed !== activeQuery.value) {
+      activeQuery.value = trimmed
+      performServerSearch(trimmed)
+    }
+  }
+)
+
+onMounted(async () => {
+  if (activeQuery.value) {
+    performServerSearch(activeQuery.value)
+    await nextTick()
+    resultsAnchor.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+})
+
+async function executeSearch() {
+  const trimmed = searchInput.value.trim()
+  activeQuery.value = trimmed
+  resetMatchedReports()
+  resetMatchedShops()
+
+  const searchPromise = performServerSearch(trimmed)
+
+  await router.replace({
+    path: '/',
+    query: trimmed ? { q: trimmed } : {}
+  })
+  if (trimmed) {
+    await nextTick()
+    resultsAnchor.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+  await searchPromise
+}
+
+function clearSearch() {
+  searchReqId += 1
+  searchInput.value = ''
+  activeQuery.value = ''
+  matchedReports.value = []
+  matchedShops.value = []
+  isSearching.value = false
+  router.replace({ path: '/', query: {} })
+}
+
+async function pasteAndSearch() {
+  try {
+    const text = await navigator.clipboard.readText()
+    if (text && text.trim()) {
+      searchInput.value = text.trim()
+      executeSearch()
+    }
+  } catch {
+    // Clipboard permission denied — keep focus for manual Ctrl+V
+  }
+}
+
+const {
+  visibleItems: visibleMatchedReports,
+  hasMore: hasMoreReports,
+  remainingCount: remainingReports,
+  sentinelRef: reportsSentinelRef,
+  loadMore: loadMoreReports,
+  reset: resetMatchedReports
+} = useLazyList(matchedReports, 6)
+
+const {
+  visibleItems: visibleMatchedShops,
+  hasMore: hasMoreShops,
+  remainingCount: remainingShops,
+  sentinelRef: shopsSentinelRef,
+  loadMore: loadMoreShops,
+  reset: resetMatchedShops
+} = useLazyList(matchedShops, 6)
+</script>
+
+<template>
+  <div class="home">
+    <!-- Screen 1: Centered Hero -->
+    <section class="hero-centred" aria-labelledby="hero-heading">
+      <div class="wrap hero-centred__inner">
+        <h1 id="hero-heading" class="hero-centred__h1 enter-rise-1">
+          Tra cứu số tài khoản và hồ sơ shop trước khi chuyển tiền.
+        </h1>
+
+        <p class="hero-centred__lead enter-rise-2">
+          Nhập số tài khoản ngân hàng, số điện thoại Zalo, username hoặc dán liên kết mạng xã hội để đối chiếu dữ liệu tố cáo và tài khoản chính chủ của shop.
+        </p>
+
+        <form class="search-bar enter-rise-3" role="search" @submit.prevent="executeSearch">
+          <label for="main-lookup-input" class="sr-only">
+            Nhập số tài khoản, số điện thoại, username hoặc link mạng xã hội
+          </label>
+          <div class="search-bar__box">
+            <svg class="search-bar__icon" viewBox="0 0 20 20" width="18" height="18" fill="none" aria-hidden="true">
+              <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.7" />
+              <path d="M13.5 13.5L17.5 17.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" />
+            </svg>
+
+            <input
+              id="main-lookup-input"
+              v-model="searchInput"
+              type="search"
+              class="search-bar__input"
+              placeholder="Nhập STK, SĐT, username hoặc dán link Facebook, TikTok..."
+              autocomplete="off"
+            />
+
+            <button
+              v-if="!searchInput"
+              type="button"
+              class="search-bar__aux"
+              @click="pasteAndSearch"
+            >
+              Dán nhanh
+            </button>
+            <button
+              v-else
+              type="button"
+              class="search-bar__aux"
+              aria-label="Xóa từ khóa tìm kiếm"
+              @click="clearSearch"
+            >
+              Xóa
+            </button>
+
+            <button type="submit" class="btn btn--primary search-bar__submit" :disabled="isSearching">
+              <span>{{ isSearching ? 'Đang tra cứu...' : 'Kiểm tra' }}</span>
+              <svg class="m-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3 8H13M9 4L13 8L9 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="search-bar__hints">
+            <span>Hỗ trợ tự động lọc mã UID từ link Facebook di động, chuẩn hóa đầu số +84 và bỏ khoảng trắng số tài khoản.</span>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- On-Demand Search Results Section (Only shown when user searches) -->
+    <section
+      v-if="activeQuery"
+      ref="resultsAnchor"
+      class="section section--results"
+      aria-live="polite"
+    >
+      <div class="wrap">
+        <div class="verdict-header">
+          <div class="verdict-header__left">
+            <span class="label">Kết quả đối chiếu cho truy vấn</span>
+            <h2 class="verdict-header__query mono">"{{ activeQuery }}"</h2>
+          </div>
+          <button type="button" class="btn btn--secondary btn--sm" @click="clearSearch">
+            Đóng kết quả tra cứu
+          </button>
+        </div>
+
+        <div v-if="isSearching" class="verdict-banner verdict-banner--neutral">
+          <div>
+            <strong>Đang truy vấn dữ liệu trên hệ thống...</strong>
+            <p class="muted">Đang đối chiếu chỉ mục số tài khoản, số điện thoại và định danh mạng xã hội.</p>
+          </div>
+        </div>
+
+        <template v-else>
+          <div
+            v-if="matchedReports.length > 0"
+            class="verdict-banner verdict-banner--danger"
+          >
+            <div>
+              <strong>Cảnh báo rủi ro cao: Phát hiện {{ matchedReports.length }} hồ sơ tố cáo lừa đảo trùng khớp.</strong>
+              <p>Tuyệt đối tạm dừng chuyển khoản và kiểm tra kỹ số tài khoản, tên chủ thẻ cùng bằng chứng đính kèm bên dưới.</p>
+            </div>
+          </div>
+
+          <div
+            v-if="matchedShops.length > 0"
+            class="verdict-banner verdict-banner--verified"
+          >
+            <div>
+              <strong>Tìm thấy {{ matchedShops.length }} hồ sơ Shop đã xác minh trùng khớp.</strong>
+              <p>Hãy đối chiếu chính xác từng chữ số của Số tài khoản ngân hàng và đúng đường dẫn MXH chính thức trước khi giao dịch.</p>
+            </div>
+          </div>
+
+          <div
+            v-if="matchedReports.length === 0 && matchedShops.length === 0"
+            class="verdict-banner verdict-banner--neutral"
+          >
+            <div class="verdict-banner__empty-copy">
+              <strong>Chưa ghi nhận hồ sơ trùng khớp với "{{ activeQuery }}" trên hệ thống.</strong>
+              <p>
+                Việc chưa có đơn tố cáo không đồng nghĩa tài khoản này an toàn 100% (kẻ gian có thể vừa mở tài khoản mới). Hãy kiểm tra kỹ lịch sử hoạt động của nick, gọi video xác nhận hoặc giao dịch qua shop đã xác minh.
+              </p>
+            </div>
+            <RouterLink to="/report" class="btn btn--secondary btn--sm">
+              Gửi tố cáo mới
+            </RouterLink>
+          </div>
+
+          <!-- Matched Scam Reports (Lazy Loaded) -->
+          <div v-if="matchedReports.length > 0" class="verdict-group">
+            <h3 class="verdict-group__title">Hồ sơ cảnh báo lừa đảo ({{ matchedReports.length }})</h3>
+            <div class="dossier-grid">
+              <ReportDossierCard
+                v-for="entry in visibleMatchedReports"
+                :key="entry.item.id"
+                :report="entry.item"
+                :match-info="entry.match"
+              />
+            </div>
+            <div v-if="hasMoreReports" ref="reportsSentinelRef" class="lazy-more">
+              <button type="button" class="btn btn--secondary btn--sm" @click="loadMoreReports">
+                Hiển thị thêm ({{ remainingReports }} hồ sơ cảnh báo)
+              </button>
+            </div>
+          </div>
+
+          <!-- Matched Verified Shops (Lazy Loaded) -->
+          <div v-if="matchedShops.length > 0" class="verdict-group">
+            <h3 class="verdict-group__title">Hồ sơ Shop đã xác minh ({{ matchedShops.length }})</h3>
+            <div class="dossier-grid">
+              <ShopDossierCard
+                v-for="entry in visibleMatchedShops"
+                :key="entry.item.id"
+                :shop="entry.item"
+                :match-info="entry.match"
+              />
+            </div>
+            <div v-if="hasMoreShops" ref="shopsSentinelRef" class="lazy-more">
+              <button type="button" class="btn btn--secondary btn--sm" @click="loadMoreShops">
+                Hiển thị thêm ({{ remainingShops }} shop xác minh)
+              </button>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+
+    <!-- Section: Verification Protocol -->
+    <section class="section section--alt" aria-labelledby="protocol-h">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="section-head__copy">
+            <h2 id="protocol-h">
+              Ba nguyên tắc kiểm tra trước khi chuyển khoản.
+            </h2>
+          </div>
+        </div>
+
+        <div class="grid">
+          <article class="card span-4 protocol-card">
+            <span class="mono protocol-card__step">01 / Ngân hàng</span>
+            <h3>Đối chiếu đúng số tài khoản nhận tiền</h3>
+            <p>
+              Kẻ giả mạo thường lập Fanpage giống hệt shop thật nhưng đưa số tài khoản cá nhân khác lúc thanh toán. Luôn tra cứu chính dãy số tài khoản nhận tiền.
+            </p>
+          </article>
+
+          <article class="card span-4 protocol-card">
+            <span class="mono protocol-card__step">02 / Định danh MXH</span>
+            <h3>Kiểm tra liên kết gốc thay vì ảnh đại diện</h3>
+            <p>
+              Tên hiển thị và ảnh đại diện có thể sao chép trong một phút, nhưng UID Facebook, username và số điện thoại Zalo là định danh duy nhất để phát hiện nick ảo.
+            </p>
+          </article>
+
+          <article class="card span-4 protocol-card">
+            <span class="mono protocol-card__step">03 / Bằng chứng thực</span>
+            <h3>Lưu lại biên lai và đường dẫn trang cá nhân</h3>
+            <p>
+              Chụp màn hình đoạn hội thoại, mã giao dịch ngân hàng và sao chép link trang cá nhân trước khi bị chặn để gửi báo cáo cảnh báo kịp thời.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+  </div>
+</template>
+
+<style scoped>
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.hero-centred {
+  min-height: calc(78svh - var(--nav));
+  display: flex;
+  align-items: center;
+  padding-top: var(--s-8);
+  padding-bottom: var(--s-8);
+  border-bottom: 1px solid var(--p-line);
+  background: var(--p-bg);
+}
+
+.hero-centred__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--s-5);
+}
+
+.hero-centred__h1 {
+  max-width: 20ch;
+}
+
+.hero-centred__lead {
+  font-size: var(--t-lead);
+  color: var(--p-text);
+  max-width: 60ch;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+/* Centered Search Bar */
+.search-bar {
+  width: min(100%, 760px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: var(--s-2);
+}
+
+.search-bar__box {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line-strong);
+  border-radius: var(--r-md);
+  padding: 6px 6px 6px 14px;
+  text-align: left;
+  transition: border-color 150ms var(--ease), box-shadow 150ms var(--ease);
+}
+
+.search-bar__box:focus-within {
+  border-color: var(--p-action);
+  box-shadow: 0 0 0 3px rgba(13, 116, 128, 0.14);
+}
+
+.search-bar__icon {
+  color: var(--p-muted);
+  flex-shrink: 0;
+}
+
+.search-bar__input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  color: var(--p-ink);
+}
+
+.search-bar__input:focus {
+  outline: none;
+}
+
+.search-bar__aux {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--p-line);
+  background: var(--p-surface);
+  color: var(--p-ink);
+  font-size: var(--t-label);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.search-bar__aux:hover {
+  border-color: var(--p-ink);
+}
+
+.search-bar__hints {
+  font-size: var(--t-label);
+  color: var(--p-muted);
+  text-align: center;
+  max-width: 60ch;
+}
+
+/* Search Verdict Section */
+.section--results {
+  scroll-margin-top: var(--nav);
+  border-bottom: 1px solid var(--p-line);
+  background: var(--p-bg);
+}
+
+.verdict-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-4);
+  margin-bottom: var(--s-5);
+}
+
+.verdict-header__left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.verdict-header__query {
+  font-size: var(--t-h2);
+  word-break: break-all;
+}
+
+.verdict-banner {
+  padding: 18px 22px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--p-line);
+  margin-bottom: var(--s-5);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+.verdict-banner strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.verdict-banner p {
+  font-size: var(--t-small);
+}
+
+.verdict-banner--danger {
+  background: var(--p-danger-bg);
+  border-color: var(--p-danger-line);
+  color: var(--p-danger);
+}
+
+.verdict-banner--verified {
+  background: var(--p-verified-bg);
+  border-color: var(--p-verified-line);
+  color: var(--p-verified);
+}
+
+.verdict-banner--neutral {
+  background: var(--p-card);
+  border-color: var(--p-line-strong);
+  color: var(--p-ink);
+}
+
+.verdict-banner__empty-copy {
+  max-width: 72ch;
+}
+
+.verdict-banner__empty-copy p {
+  color: var(--p-muted);
+}
+
+.verdict-group {
+  margin-top: var(--s-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.verdict-group__title {
+  font-size: var(--t-h3);
+}
+
+.dossier-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-5);
+  align-items: start;
+}
+
+.lazy-more {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--s-5);
+}
+
+.protocol-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.protocol-card__step {
+  font-size: var(--t-label);
+  color: var(--p-action);
+  font-weight: 500;
+}
+
+.protocol-card p {
+  font-size: var(--t-body);
+  color: var(--p-text);
+}
+
+@media (max-width: 1080px) {
+  .dossier-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 639px) {
+  .hero-centred {
+    min-height: auto;
+    padding-top: var(--s-7);
+    padding-bottom: var(--s-7);
+  }
+  .search-bar__box {
+    flex-wrap: wrap;
+    padding: 10px;
+  }
+  .search-bar__submit {
+    width: 100%;
+  }
+}
+</style>

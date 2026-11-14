@@ -1,0 +1,110 @@
+:root {
+  /* Dealt palette: cool-white-slate (tasteskill fintech) */
+  --p-bg: #f7f9fa;
+  --p-surface: #ecf0f2;
+  --p-card: #ffffff;
+  --p-ink: #1f3038;
+  --p-text: rgba(31, 48, 56, 0.86);
+  --p-muted: #55646b;
+  --p-line: rgba(31, 48, 56, 0.13);
+  --p-line-strong: rgba(31, 48, 56, 0.24);
+
+  /* Single primary brand action — deep verification petrol */
+  --p-accent: #0d7480;
+  --p-accent-hover: #0a5e68;
+  --p-accent-soft: #e6f2f4;
+  --p-accent-ink: #ffffff;
+  --p-action: #0d7480;
+  --p-action-ink: #ffffff;
+
+  /* Inverse dark slate band (footer & ledger header) */
+  --p-inv-bg: #18252b;
+  --p-inv-surface: #22333b;
+  --p-inv-ink: #f7f9fa;
+  --p-inv-muted: #9eb0b8;
+  --p-inv-line: rgba(247, 249, 250, 0.12);
+
+  /* Semantic forensic ledger stamps (high contrast, zero neon) */
+  --p-danger: #b42318;
+  --p-danger-bg: #fef3f2;
+  --p-danger-line: #fecdca;
+
+  --p-verified: #086552;
+  --p-verified-bg: #eef9f6;
+  --p-verified-line: #bce3d8;
+
+  --p-warn: #935310;
+  --p-warn-bg: #fdf6ec;
+  --p-warn-line: #f3d9b1;
+
+  /* Dealt typography: Manrope + JetBrains Mono */
+  --font-display: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-text: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+
+  --display-weight: 500;
+  --display-tracking: -0.035em;
+  --display-tracking-xl: -0.042em;
+
+  /* Type scale (desktop / mobile responsive clamp) */
+  --t-h1: clamp(2.15rem, 3.3vw + 0.8rem, 3.5rem);
+  --t-h2: clamp(1.65rem, 2.1vw + 0.6rem, 2.55rem);
+  --t-h3: clamp(1.25rem, 1.1vw + 0.65rem, 1.6rem);
+  --t-lead: clamp(1.0625rem, 0.35vw + 0.95rem, 1.2rem);
+  --t-card: 1.15rem;
+  --t-body: 1rem;
+  --t-small: 0.875rem;
+  --t-label: 0.8125rem;
+  --t-stat: clamp(1.75rem, 1.8vw + 1rem, 2.375rem);
+
+  /* Strict spacing scale (4, 8, 12, 16, 24, 32, 48, 64, 96, 128) */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+  --s-9: 96px;
+  --s-10: 128px;
+
+  /* Rhythm & layout geometry */
+  --nav: 72px;
+  --gut: 80px;
+  --wrap-max: 1280px;
+  --padt: 88px;
+  --padb: 72px;
+
+  /* Radius family: sharp fintech (4 / 6 / 8) */
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-btn: 6px;
+
+  /* Motion curves & timings (tasteskill motion.md) */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --m-ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
+  --m-in: 150ms;
+  --m-out: 120ms;
+  --m-press: 90ms;
+  --m-image: 600ms;
+  --m-image-out: 400ms;
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --gut: 48px;
+    --padt: 72px;
+    --padb: 56px;
+  }
+}
+
+@media (max-width: 639px) {
+  :root {
+    --nav: 56px;
+    --gut: 24px;
+    --padt: 56px;
+    --padb: 48px;
+  }
+}
