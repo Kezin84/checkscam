@@ -43,8 +43,8 @@ const {
     <div class="wrap">
       <div class="page-head">
         <div class="page-head__copy">
-          <span class="label">Cảnh báo cộng đồng Việt tại Philippines</span>
-          <h1>Hồ sơ tố cáo lừa đảo đã kiểm duyệt</h1>
+          <span class="label">Danh sách lừa đảo cộng đồng Việt tại Philippines</span>
+          <h1>Danh sách lừa đảo đã kiểm duyệt</h1>
           <p class="muted measure">
             Tổng hợp các đối tượng mạo danh Shop Việt tại Philippines, lừa đổi tiền Peso - VND, nhận cọc ảo hoặc lừa đảo giao dịch đã được đối chiếu biên lai và thông tin định danh trước khi công bố.
           </p>
@@ -82,7 +82,7 @@ const {
       </div>
 
       <div v-if="loading" class="status-box">
-        Đang truy vấn dữ liệu cảnh báo...
+        Đang truy vấn danh sách lừa đảo...
       </div>
 
       <template v-else-if="visibleReports.length > 0">
@@ -97,13 +97,13 @@ const {
             :disabled="loadingMore"
             @click="loadNextPage"
           >
-            {{ loadingMore ? 'Đang tải thêm...' : 'Hiển thị thêm hồ sơ cảnh báo' }}
+            {{ loadingMore ? 'Đang tải thêm...' : 'Hiển thị thêm danh sách lừa đảo' }}
           </button>
         </div>
       </template>
 
       <div v-else class="card status-box">
-        <h3>Chưa tìm thấy hồ sơ cảnh báo phù hợp.</h3>
+        <h3>Chưa tìm thấy hồ sơ lừa đảo phù hợp.</h3>
         <p class="muted">Thử thay đổi từ khóa tra cứu hoặc gửi hồ sơ mới nếu bạn vừa phát hiện hành vi lừa đảo.</p>
       </div>
     </div>

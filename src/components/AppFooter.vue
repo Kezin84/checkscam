@@ -27,14 +27,11 @@ const year = new Date().getFullYear()
       <div class="closing__directory">
         <div class="closing__brand-col">
           <div class="closing__logo">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
-              <rect width="24" height="24" rx="4" fill="#f7f9fa" />
-              <path d="M6.8 12.2L10.3 15.7L17.4 8.6" stroke="#18252b" stroke-width="2.1" stroke-linecap="square" />
-            </svg>
-            <span>CheckGD</span>
+            <img src="/logo.jpg" alt="" class="closing__logo-img" width="24" height="24" />
+            <span>CHECK LỪA ĐẢO</span>
           </div>
           <p class="closing__note">
-            Cổng tra cứu thông tin Shop Việt uy tín tại Philippines, hỗ trợ đối chiếu số tài khoản ngân hàng, ví GCash, liên kết mạng xã hội và cảnh báo lừa đảo phục vụ cộng đồng người Việt tại Philippines.
+            Cổng tra cứu thông tin Shop Việt uy tín tại Philippines, hỗ trợ đối chiếu số tài khoản ngân hàng, ví GCash, liên kết mạng xã hội và danh sách lừa đảo phục vụ cộng đồng người Việt tại Philippines.
           </p>
         </div>
 
@@ -42,13 +39,13 @@ const year = new Date().getFullYear()
           <div class="closing__col">
             <h3>Tra cứu</h3>
             <RouterLink to="/">Kiểm tra số tài khoản</RouterLink>
-            <RouterLink to="/shops">Shop đã xác minh</RouterLink>
-            <RouterLink to="/alerts">Hồ sơ cảnh báo</RouterLink>
+            <RouterLink to="/shops">Shop uy tín</RouterLink>
+            <RouterLink to="/alerts">Danh sách lừa đảo</RouterLink>
           </div>
           <div class="closing__col">
             <h3>Cộng đồng bảo vệ</h3>
             <RouterLink to="/report">Gửi đơn tố cáo lừa đảo</RouterLink>
-            <RouterLink to="/alerts">Cảnh báo mới cập nhật</RouterLink>
+            <RouterLink to="/alerts">Danh sách lừa đảo mới cập nhật</RouterLink>
           </div>
           <div class="closing__col">
             <h3>Liên hệ</h3>
@@ -81,7 +78,7 @@ const year = new Date().getFullYear()
       </div>
 
       <div class="closing__legal">
-        <span>© {{ year }} CheckGD. Dữ liệu tố cáo được kiểm duyệt trước khi hiển thị công khai.</span>
+        <span>© {{ year }} CHECK LỪA ĐẢO. Dữ liệu tố cáo được kiểm duyệt trước khi hiển thị công khai.</span>
         <span>Tên và biểu trưng ngân hàng, mạng xã hội thuộc quyền sở hữu của đơn vị chủ quản.</span>
       </div>
     </div>
@@ -146,9 +143,17 @@ const year = new Date().getFullYear()
   align-items: center;
   gap: 10px;
   font-family: var(--font-display);
-  font-size: 19px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
   letter-spacing: -0.02em;
+}
+
+.closing__logo-img {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  object-fit: cover;
+  display: block;
 }
 
 .closing__note {

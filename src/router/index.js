@@ -6,31 +6,31 @@ const routes = [
     path: '/',
     name: 'home',
     component: HomeView,
-    meta: { title: 'CheckGD: Tra cứu Shop Việt tại Philippines & Cảnh báo lừa đảo' }
+    meta: { title: 'CHECK LỪA ĐẢO: Tra cứu Shop Việt tại Philippines & Danh sách lừa đảo' }
   },
   {
     path: '/shops',
     name: 'shops',
     component: () => import('@/views/TrustedShopsView.vue'),
-    meta: { title: 'Shop Việt đã xác minh tại Philippines — CheckGD' }
+    meta: { title: 'Shop uy tín tại Philippines — CHECK LỪA ĐẢO' }
   },
   {
     path: '/alerts',
     name: 'alerts',
     component: () => import('@/views/AlertsView.vue'),
-    meta: { title: 'Cảnh báo lừa đảo cộng đồng Việt tại Philippines — CheckGD' }
+    meta: { title: 'Danh sách lừa đảo cộng đồng Việt tại Philippines — CHECK LỪA ĐẢO' }
   },
   {
     path: '/report',
     name: 'report',
     component: () => import('@/views/SubmitReportView.vue'),
-    meta: { title: 'Gửi hồ sơ tố cáo lừa đảo — CheckGD Philippines' }
+    meta: { title: 'Gửi hồ sơ tố cáo lừa đảo — CHECK LỪA ĐẢO' }
   },
   {
     path: '/admin',
     name: 'admin',
     component: () => import('@/views/AdminView.vue'),
-    meta: { title: 'Quản trị hệ thống — CheckGD' }
+    meta: { title: 'Quản trị hệ thống — CHECK LỪA ĐẢO' }
   },
   {
     path: '/:pathMatch(.*)*',

@@ -250,7 +250,7 @@ const {
 
           <!-- Matched Scam Reports (Lazy Loaded) -->
           <div v-if="matchedReports.length > 0" class="verdict-group">
-            <h3 class="verdict-group__title">Hồ sơ cảnh báo lừa đảo ({{ matchedReports.length }})</h3>
+            <h3 class="verdict-group__title">Danh sách lừa đảo ({{ matchedReports.length }})</h3>
             <div class="dossier-grid">
               <ReportDossierCard
                 v-for="entry in visibleMatchedReports"
@@ -261,14 +261,14 @@ const {
             </div>
             <div v-if="hasMoreReports" ref="reportsSentinelRef" class="lazy-more">
               <button type="button" class="btn btn--secondary btn--sm" @click="loadMoreReports">
-                Hiển thị thêm ({{ remainingReports }} hồ sơ cảnh báo)
+                Hiển thị thêm ({{ remainingReports }} hồ sơ lừa đảo)
               </button>
             </div>
           </div>
 
           <!-- Matched Verified Shops (Lazy Loaded) -->
           <div v-if="matchedShops.length > 0" class="verdict-group">
-            <h3 class="verdict-group__title">Hồ sơ Shop đã xác minh ({{ matchedShops.length }})</h3>
+            <h3 class="verdict-group__title">Shop uy tín ({{ matchedShops.length }})</h3>
             <div class="dossier-grid">
               <ShopDossierCard
                 v-for="entry in visibleMatchedShops"
@@ -279,7 +279,7 @@ const {
             </div>
             <div v-if="hasMoreShops" ref="shopsSentinelRef" class="lazy-more">
               <button type="button" class="btn btn--secondary btn--sm" @click="loadMoreShops">
-                Hiển thị thêm ({{ remainingShops }} shop xác minh)
+                Hiển thị thêm ({{ remainingShops }} shop uy tín)
               </button>
             </div>
           </div>

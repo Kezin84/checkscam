@@ -9,14 +9,11 @@ const route = useRoute()
     <div class="wrap nav-bar__inner">
       <a class="skip-link" href="#top">Chuyển tới nội dung chính</a>
 
-      <RouterLink to="/" class="nav-brand" aria-label="CheckGD Trang chủ">
+      <RouterLink to="/" class="nav-brand" aria-label="CHECK LỪA ĐẢO Trang chủ">
         <span class="nav-brand__mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
-            <rect width="24" height="24" rx="4" fill="#1f3038" />
-            <path d="M6.8 12.2L10.3 15.7L17.4 8.6" stroke="#f7f9fa" stroke-width="2.1" stroke-linecap="square" />
-          </svg>
+          <img src="/logo.jpg" alt="" class="nav-brand__img" width="28" height="28" />
         </span>
-        <span class="nav-brand__word">CheckGD</span>
+        <span class="nav-brand__word">CHECK LỪA ĐẢO</span>
       </RouterLink>
 
       <nav class="nav-links" aria-label="Điều hướng chính">
@@ -32,14 +29,14 @@ const route = useRoute()
           class="nav-links__item"
           :aria-current="route.path === '/shops' ? 'page' : undefined"
         >
-          Shop xác minh
+          Shop uy tín
         </RouterLink>
         <RouterLink
           to="/alerts"
           class="nav-links__item"
           :aria-current="route.path === '/alerts' ? 'page' : undefined"
         >
-          Hồ sơ cảnh báo
+          Danh sách lừa đảo
         </RouterLink>
         <a
           href="https://t.me/dakv88"
@@ -101,7 +98,7 @@ const route = useRoute()
         <path d="M10 3L17.6 16.4H2.4L10 3Z" stroke="currentColor" stroke-width="1.6" />
         <path d="M10 8V11.6M10 13.9V14.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" />
       </svg>
-      <span>Cảnh báo</span>
+      <span>Lừa đảo</span>
     </RouterLink>
 
     <RouterLink
@@ -168,11 +165,20 @@ const route = useRoute()
   justify-content: center;
 }
 
+.nav-brand__img {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid var(--p-line);
+  display: block;
+}
+
 .nav-brand__word {
   font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.03em;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--p-ink);
 }
 
