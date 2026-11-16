@@ -488,13 +488,29 @@ function resolveBadgeStyle(label = '') {
   contain-intrinsic-size: auto 460px;
 }
 
+.shop-card:not(.shop-card--in-modal) {
+  border-color: rgba(31, 48, 56, 0.14);
+  border-bottom-color: rgba(31, 48, 56, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(24, 37, 43, 0.05),
+    0 6px 16px -4px rgba(24, 37, 43, 0.08),
+    0 12px 24px -10px rgba(13, 116, 128, 0.06);
+}
+
 @media (min-width: 960px) and (hover: hover) and (pointer: fine) {
   .shop-card--expandable {
     cursor: pointer;
   }
   .shop-card--expandable:hover {
+    transform: translateY(-2px);
     border-color: rgba(13, 116, 128, 0.36);
-    box-shadow: 0 12px 28px rgba(24, 37, 43, 0.08);
+    border-bottom-color: rgba(13, 116, 128, 0.44);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      0 2px 4px rgba(24, 37, 43, 0.06),
+      0 14px 28px -6px rgba(24, 37, 43, 0.12),
+      0 18px 34px -12px rgba(13, 116, 128, 0.12);
   }
 }
 
