@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, useId } from 'vue'
 import PlatformIcon from './icons/PlatformIcon.vue'
 import CopyButton from './CopyButton.vue'
 import LightboxModal from './LightboxModal.vue'
@@ -31,6 +31,7 @@ const props = defineProps({
 })
 
 const { findBank } = useBanks()
+const chipUid = useId()
 const detailModalOpen = ref(false)
 const lightboxImages = ref([])
 const lightboxIdx = ref(-1)
@@ -388,7 +389,7 @@ function resolveBadgeStyle(label = '') {
     <div v-if="bankList.length" class="shop-card__col-banks shop-card__section">
       <span class="label">Tài khoản ngân hàng chính chủ</span>
 
-      <div v-if="inModal" class="credit-list">
+      <div class="credit-list">
         <div v-for="(bank, bIdx) in bankList" :key="bIdx" class="credit-card">
           <div class="credit-card__top">
             <div class="credit-card__brand">
@@ -413,10 +414,19 @@ function resolveBadgeStyle(label = '') {
 
           <div class="credit-card__chip-row">
             <svg class="credit-card__chip" viewBox="0 0 38 26" width="36" height="25" fill="none" aria-hidden="true">
-              <rect x="0.75" y="0.75" width="36.5" height="24.5" rx="4.25" fill="url(#chipGrad)" stroke="rgba(255,255,255,0.45)" stroke-width="1.2" />
+              <rect
+                x="0.75"
+                y="0.75"
+                width="36.5"
+                height="24.5"
+                rx="4.25"
+                :fill="`url(#chip-${chipUid}-${bIdx})`"
+                stroke="rgba(255,255,255,0.45)"
+                stroke-width="1.2"
+              />
               <path d="M12 1V25M26 1V25M1 9H12M1 17H12M26 9H37M26 17H37" stroke="rgba(120,86,18,0.48)" stroke-width="1.1" />
               <defs>
-                <linearGradient id="chipGrad" x1="0" y1="0" x2="38" y2="26" gradientUnits="userSpaceOnUse">
+                <linearGradient :id="`chip-${chipUid}-${bIdx}`" x1="0" y1="0" x2="38" y2="26" gradientUnits="userSpaceOnUse">
                   <stop stop-color="#F6E2A1" />
                   <stop offset="0.5" stop-color="#E2BA5A" />
                   <stop offset="1" stop-color="#C99A36" />
@@ -444,33 +454,6 @@ function resolveBadgeStyle(label = '') {
         </div>
       </div>
 
-      <div v-else class="rows">
-        <div v-for="(bank, bIdx) in bankList" :key="bIdx" class="rows__item shop-card__row">
-          <div class="shop-card__row-main">
-            <span class="shop-card__bank-logo">
-              <img
-                v-if="resolveBankLogo(bank)"
-                :src="resolveBankLogo(bank)"
-                :alt="resolveBankLabel(bank)"
-                loading="lazy"
-              />
-              <span v-else class="mono">{{ (bank.bankCode || 'NH').slice(0, 4) }}</span>
-            </span>
-            <div class="shop-card__row-text">
-              <div class="shop-card__inline">
-                <span class="shop-card__bank-name">{{ resolveBankLabel(bank) }}</span>
-                <strong v-if="bank.accountNumber" class="mono shop-card__stk">
-                  {{ bank.accountNumber }}
-                </strong>
-              </div>
-              <span v-if="bank.accountHolder" class="mono shop-card__sub">
-                Chủ TK: {{ bank.accountHolder }}
-              </span>
-            </div>
-          </div>
-          <CopyButton v-if="bank.accountNumber" :value="formatBankCopyValue(bank)" label="Chép STK" />
-        </div>
-      </div>
       <p class="shop-card__guardrail">
         Chỉ chuyển khoản đúng số tài khoản chính chủ niêm yết bên trên. Nếu người bán gửi số tài khoản khác dù trùng tên trang cá nhân, hãy dừng giao dịch ngay.
       </p>
@@ -937,6 +920,16 @@ function resolveBadgeStyle(label = '') {
   border: 1px solid rgba(255, 255, 255, 0.25);
   color: rgba(255, 255, 255, 0.92);
   flex-shrink: 0;
+}
+
+@media (max-width: 639px) {
+  .credit-card {
+    padding: 15px 16px;
+    gap: 11px;
+  }
+  .credit-card__number {
+    font-size: 18px;
+  }
 }
 
 .shop-card--in-modal.shop-card--no-gallery .shop-card__col-banks {
