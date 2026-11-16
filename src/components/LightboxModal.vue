@@ -1,5 +1,6 @@
 <script setup>
 import { watch, onMounted, onBeforeUnmount } from 'vue'
+import { optimizeCloudinaryUrl } from '@/services/cloudinary'
 
 const props = defineProps({
   images: {
@@ -98,7 +99,7 @@ onBeforeUnmount(() => {
 
       <div class="lightbox__stage" @click.self="emit('close')">
         <img
-          :src="images[activeIndex]"
+          :src="optimizeCloudinaryUrl(images[activeIndex], 1400)"
           :alt="`Ảnh bằng chứng ${activeIndex + 1}`"
           class="lightbox__img"
         />
