@@ -5,37 +5,73 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 const dockHidden = ref(false)
 let lastScrollY = 0
+let touchStartY = 0
+let hasTouch = false
+
+function readScrollY() {
+  return Math.max(
+    0,
+    window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0
+  )
+}
 
 function onWindowScroll() {
-  const currentY = Math.max(0, window.scrollY || window.pageYOffset || 0)
-  if (currentY <= 48) {
+  const currentY = readScrollY()
+  if (currentY <= 16) {
     dockHidden.value = false
     lastScrollY = currentY
     return
   }
 
   const delta = currentY - lastScrollY
-  if (Math.abs(delta) < 8) return
+  if (delta >= 6) {
+    dockHidden.value = true
+    lastScrollY = currentY
+  } else if (delta <= -10) {
+    dockHidden.value = false
+    lastScrollY = currentY
+  }
+}
 
-  dockHidden.value = delta > 0
-  lastScrollY = currentY
+function onTouchStart(e) {
+  if (e.touches && e.touches.length === 1) {
+    touchStartY = e.touches[0].clientY
+    hasTouch = true
+  }
+}
+
+function onTouchMove(e) {
+  if (!hasTouch || !e.touches || e.touches.length !== 1) return
+  const curTouchY = e.touches[0].clientY
+  const swipeDelta = touchStartY - curTouchY
+  if (swipeDelta > 16 && readScrollY() > 16) {
+    dockHidden.value = true
+    touchStartY = curTouchY
+  } else if (swipeDelta < -16) {
+    dockHidden.value = false
+    touchStartY = curTouchY
+  }
 }
 
 watch(
   () => route.fullPath,
   () => {
     dockHidden.value = false
-    lastScrollY = typeof window !== 'undefined' ? Math.max(0, window.scrollY || 0) : 0
+    lastScrollY = typeof window !== 'undefined' ? readScrollY() : 0
   }
 )
 
 onMounted(() => {
-  lastScrollY = Math.max(0, window.scrollY || window.pageYOffset || 0)
+  lastScrollY = readScrollY()
   window.addEventListener('scroll', onWindowScroll, { passive: true })
+  document.addEventListener('touchstart', onTouchStart, { passive: true })
+  document.addEventListener('touchmove', onTouchMove, { passive: true })
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', onWindowScroll)
+  document.removeEventListener('touchstart', onTouchStart)
+  document.removeEventListener('touchmove', onTouchMove)
 })
 </script>
 
@@ -288,14 +324,17 @@ onBeforeUnmount(() => {
     border-radius: var(--r-lg);
     box-shadow: 0 10px 28px rgba(24, 37, 43, 0.16);
     z-index: 45;
+    will-change: transform, opacity;
     transition:
       transform 220ms var(--ease),
-      opacity 180ms var(--ease);
+      opacity 180ms var(--ease),
+      visibility 220ms var(--ease);
   }
 
   .mobile-dock.is-hidden {
-    transform: translateY(calc(100% + 24px + env(safe-area-inset-bottom, 0px)));
+    transform: translate3d(0, calc(100% + 56px), 0);
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
   }
 
