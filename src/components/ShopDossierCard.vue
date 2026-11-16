@@ -724,8 +724,8 @@ function resolveBadgeStyle(label = '') {
 }
 
 .shop-card--in-modal .shop-card__avatar {
-  width: 68px;
-  height: 68px;
+  width: 76px;
+  height: 76px;
 }
 
 .shop-card--in-modal .shop-card__col-socials {
@@ -920,6 +920,40 @@ function resolveBadgeStyle(label = '') {
   border: 1px solid rgba(255, 255, 255, 0.25);
   color: rgba(255, 255, 255, 0.92);
   flex-shrink: 0;
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-list {
+  gap: 8px;
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-card {
+  gap: 7px;
+  padding: 12px 14px;
+  border-radius: 11px;
+  box-shadow: 0 4px 12px rgba(16, 37, 44, 0.12);
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-card__chip-row,
+.shop-card:not(.shop-card--in-modal) .credit-card__meta-label {
+  display: none;
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-card__number {
+  font-size: 16px;
+  letter-spacing: 0.05em;
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-card__bottom {
+  padding-top: 0;
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-card__holder {
+  font-size: 12.5px;
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-card__verified {
+  font-size: 9.5px;
+  padding: 2px 7px;
 }
 
 @media (max-width: 639px) {
