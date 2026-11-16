@@ -485,6 +485,7 @@ function resolveBadgeStyle(label = '') {
 .shop-card__cover {
   display: block;
   width: 100%;
+  height: 196px;
   padding: 0;
   border: none;
   border-bottom: 1px solid var(--p-line);
@@ -500,9 +501,8 @@ function resolveBadgeStyle(label = '') {
 .shop-card__cover img {
   display: block;
   width: 100%;
-  height: auto;
-  max-height: 200px;
-  object-fit: contain;
+  height: 100%;
+  object-fit: cover;
   transition: transform var(--m-image-out) var(--ease);
 }
 
@@ -623,8 +623,8 @@ function resolveBadgeStyle(label = '') {
 }
 
 @media (max-width: 639px) {
-  .shop-card__cover img {
-    max-height: 150px;
+  .shop-card__cover {
+    height: 144px;
   }
   .shop-card__body {
     padding: var(--s-5);
