@@ -387,7 +387,64 @@ function resolveBadgeStyle(label = '') {
     <!-- Official Bank Accounts -->
     <div v-if="bankList.length" class="shop-card__col-banks shop-card__section">
       <span class="label">Tài khoản ngân hàng chính chủ</span>
-      <div class="rows">
+
+      <div v-if="inModal" class="credit-list">
+        <div v-for="(bank, bIdx) in bankList" :key="bIdx" class="credit-card">
+          <div class="credit-card__top">
+            <div class="credit-card__brand">
+              <span class="shop-card__bank-logo credit-card__logo">
+                <img
+                  v-if="resolveBankLogo(bank)"
+                  :src="resolveBankLogo(bank)"
+                  :alt="resolveBankLabel(bank)"
+                  loading="lazy"
+                />
+                <span v-else class="mono">{{ (bank.bankCode || 'NH').slice(0, 4) }}</span>
+              </span>
+              <span class="credit-card__bank-name">{{ resolveBankLabel(bank) }}</span>
+            </div>
+            <CopyButton
+              v-if="bank.accountNumber"
+              :value="formatBankCopyValue(bank)"
+              label="Chép STK"
+              class="credit-card__copy"
+            />
+          </div>
+
+          <div class="credit-card__chip-row">
+            <svg class="credit-card__chip" viewBox="0 0 38 26" width="36" height="25" fill="none" aria-hidden="true">
+              <rect x="0.75" y="0.75" width="36.5" height="24.5" rx="4.25" fill="url(#chipGrad)" stroke="rgba(255,255,255,0.45)" stroke-width="1.2" />
+              <path d="M12 1V25M26 1V25M1 9H12M1 17H12M26 9H37M26 17H37" stroke="rgba(120,86,18,0.48)" stroke-width="1.1" />
+              <defs>
+                <linearGradient id="chipGrad" x1="0" y1="0" x2="38" y2="26" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#F6E2A1" />
+                  <stop offset="0.5" stop-color="#E2BA5A" />
+                  <stop offset="1" stop-color="#C99A36" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <svg class="credit-card__wave" viewBox="0 0 20 20" width="18" height="18" fill="none" aria-hidden="true">
+              <path d="M5.5 13.5C7 11.6 7 8.4 5.5 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              <path d="M9 15.2C11.3 12.2 11.3 7.8 9 4.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              <path d="M12.5 16.8C15.5 12.8 15.5 7.2 12.5 3.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+          </div>
+
+          <div v-if="bank.accountNumber" class="mono credit-card__number">
+            {{ bank.accountNumber }}
+          </div>
+
+          <div class="credit-card__bottom">
+            <div class="credit-card__holder-wrap">
+              <span class="credit-card__meta-label">CHỦ TÀI KHOẢN</span>
+              <span class="credit-card__holder">{{ bank.accountHolder || 'CHÍNH CHỦ SHOP' }}</span>
+            </div>
+            <span class="credit-card__verified">CHÍNH CHỦ</span>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="rows">
         <div v-for="(bank, bIdx) in bankList" :key="bIdx" class="rows__item shop-card__row">
           <div class="shop-card__row-main">
             <span class="shop-card__bank-logo">
@@ -730,6 +787,156 @@ function resolveBadgeStyle(label = '') {
   margin-top: auto;
   padding-top: var(--s-3);
   border-top: 1px solid var(--p-line);
+}
+
+.credit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.credit-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0b4650 0%, #0d7480 56%, #14323b 100%);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(16, 37, 44, 0.16);
+}
+
+.credit-card:nth-child(3n + 2) {
+  background: linear-gradient(135deg, #16283d 0%, #23496f 56%, #122233 100%);
+}
+
+.credit-card:nth-child(3n + 3) {
+  background: linear-gradient(135deg, #074b3e 0%, #0b6f59 56%, #0c382f 100%);
+}
+
+.credit-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 88% 14%, rgba(255, 255, 255, 0.18), transparent 46%);
+  pointer-events: none;
+}
+
+.credit-card__top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.credit-card__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.credit-card__logo {
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.credit-card__bank-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.credit-card :deep(.credit-card__copy) {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.credit-card :deep(.credit-card__copy:hover) {
+  background: rgba(255, 255, 255, 0.26);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.credit-card :deep(.credit-card__copy.is-copied) {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #065f46;
+}
+
+.credit-card__chip-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.credit-card__chip {
+  display: block;
+}
+
+.credit-card__wave {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.credit-card__number {
+  position: relative;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #ffffff;
+  word-break: break-all;
+  line-height: 1.25;
+}
+
+.credit-card__bottom {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.credit-card__holder-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.credit-card__meta-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.credit-card__holder {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #ffffff;
+  word-break: break-word;
+}
+
+.credit-card__verified {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.92);
+  flex-shrink: 0;
 }
 
 .shop-card--in-modal.shop-card--no-gallery .shop-card__col-banks {
