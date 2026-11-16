@@ -37,14 +37,14 @@
   --p-warn-bg: #fdf6ec;
   --p-warn-line: #f3d9b1;
 
-  /* Dealt typography: Manrope + JetBrains Mono */
-  --font-display: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-text: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* Facebook-style native system UI typography + JetBrains Mono */
+  --font-display: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-text: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
 
-  --display-weight: 500;
-  --display-tracking: -0.035em;
-  --display-tracking-xl: -0.042em;
+  --display-weight: 600;
+  --display-tracking: -0.02em;
+  --display-tracking-xl: -0.025em;
 
   /* Type scale (desktop / mobile responsive clamp) */
   --t-h1: clamp(2.15rem, 3.3vw + 0.8rem, 3.5rem);
