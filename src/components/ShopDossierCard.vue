@@ -258,17 +258,12 @@ function resolveBadgeStyle(label = '') {
       {{ shop.description }}
     </p>
 
-    <div class="shop-card__guardrail">
-      <svg class="shop-card__guardrail-icon" viewBox="0 0 18 18" width="17" height="17" fill="none" aria-hidden="true">
-        <path d="M9 1.8L15 4.2V8.7C15 12.4 12.4 15.4 9 16.4C5.6 15.4 3 12.4 3 8.7V4.2L9 1.8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
-        <path d="M6.3 9.1L8.1 10.9L11.8 7.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-      <span>Chỉ chuyển khoản đúng số tài khoản chính chủ niêm yết bên dưới. Nếu người bán gửi số tài khoản khác dù trùng tên trang cá nhân, hãy dừng giao dịch ngay.</span>
-    </div>
-
     <!-- Official Bank Accounts -->
     <div v-if="bankList.length" class="shop-card__section">
       <span class="label">Tài khoản ngân hàng chính chủ</span>
+      <p class="shop-card__guardrail">
+        Chỉ chuyển khoản đúng số tài khoản chính chủ niêm yết bên dưới. Nếu người bán gửi số tài khoản khác dù trùng tên trang cá nhân, hãy dừng giao dịch ngay.
+      </p>
       <div class="rows">
         <div v-for="(bank, bIdx) in bankList" :key="bIdx" class="rows__item shop-card__row">
           <div class="shop-card__row-main">
@@ -542,21 +537,11 @@ function resolveBadgeStyle(label = '') {
 }
 
 .shop-card__guardrail {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px 14px;
-  border-radius: var(--r-sm);
-  background: var(--p-verified-bg);
-  border: 1px solid var(--p-verified-line);
-  color: var(--p-verified);
+  margin: 0;
+  color: var(--p-danger);
   font-size: var(--t-small);
+  font-weight: 500;
   line-height: 1.5;
-}
-
-.shop-card__guardrail-icon {
-  flex-shrink: 0;
-  margin-top: 2px;
 }
 
 .shop-card__section {
