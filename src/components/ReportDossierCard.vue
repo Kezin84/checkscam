@@ -95,6 +95,9 @@ function matchBadgeLabel(type) {
 
     <div class="dossier__title-block">
       <h3 class="dossier__name">{{ report.subjectName }}</h3>
+      <p v-if="report.subjectDescription" class="dossier__subject-desc">
+        {{ report.subjectDescription }}
+      </p>
       <div v-if="incidentList.length > 1" class="dossier__scam-meta">
         <span class="dossier__method">{{ incidentList.length }} vụ việc ghi nhận</span>
         <span v-if="totalScamAmount > 0" class="mono dossier__amount">
@@ -148,22 +151,25 @@ function matchBadgeLabel(type) {
         :key="cIdx"
         class="dossier__incident"
       >
-        <div class="dossier__incident-head">
-          <div class="dossier__scam-meta">
-            <span v-if="incidentList.length > 1" class="stamp stamp--danger">
-              Vụ việc #{{ cIdx + 1 }}
-            </span>
-            <span v-if="inc.scamType" class="dossier__method">{{ inc.scamType }}</span>
-          </div>
+        <div v-if="incidentList.length > 1 || inc.scamAmount > 0" class="dossier__incident-head">
+          <span v-if="incidentList.length > 1" class="stamp stamp--danger">
+            Vụ việc #{{ cIdx + 1 }}
+          </span>
           <span v-if="inc.scamAmount > 0" class="mono dossier__amount">
             Thiệt hại: {{ formatCurrencyVi(inc.scamAmount) }}
           </span>
         </div>
 
+        <div v-if="inc.scamType" class="dossier__section">
+          <span class="label">Hình thức lừa đảo</span>
+          <span class="dossier__method">{{ inc.scamType }}</span>
+        </div>
+
         <!-- Description -->
-        <p v-if="inc.description" class="dossier__desc">
-          {{ inc.description }}
-        </p>
+        <div v-if="inc.description" class="dossier__section">
+          <span class="label">Mô tả sự việc</span>
+          <p class="dossier__desc">{{ inc.description }}</p>
+        </div>
 
         <!-- Evidence photos (House rule 1: no captions under images) -->
         <div v-if="inc.evidenceImages.length" class="dossier__section">
@@ -259,6 +265,13 @@ function matchBadgeLabel(type) {
 .dossier__name {
   font-size: var(--t-h3);
   color: var(--p-ink);
+}
+
+.dossier__subject-desc {
+  font-size: var(--t-small);
+  color: var(--p-muted);
+  line-height: 1.55;
+  white-space: pre-line;
 }
 
 .dossier__scam-meta {

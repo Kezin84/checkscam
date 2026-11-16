@@ -450,6 +450,7 @@ export function prepareScamReportPayload(raw, existingCreatedAt = null) {
 
   const base = {
     subjectName,
+    subjectDescription: String(raw.subjectDescription || '').trim(),
     scamType: primaryIncident.scamType,
     scamAmount: totalAmount,
     description: primaryIncident.description,

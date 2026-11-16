@@ -83,6 +83,7 @@ function createInitialState(src) {
 
   return {
     subjectName: src?.subjectName || '',
+    subjectDescription: src?.subjectDescription || '',
     socials:
       Array.isArray(src?.socials) && src.socials.length
         ? src.socials.map((s) => ({ ...emptySocial(), ...s }))
@@ -274,6 +275,7 @@ function handleSubmit() {
 
   emit('submit', {
     subjectName: form.subjectName.trim(),
+    subjectDescription: form.subjectDescription.trim(),
     scamType: primaryIncident.scamType || '',
     scamAmount: totalAmount || '',
     description: primaryIncident.description || '',
@@ -311,6 +313,19 @@ function handleSubmit() {
           :aria-invalid="errors.subjectName ? 'true' : undefined"
         />
         <p v-if="errors.subjectName" class="field__error">{{ errors.subjectName }}</p>
+      </div>
+
+      <div v-if="mode !== 'public'" class="field">
+        <label for="rf-subject-desc" class="field__label">
+          <span>Mô tả chung đối tượng</span>
+          <span class="field__hint">Chỉ Admin nhập — hiển thị dưới tên đối tượng</span>
+        </label>
+        <textarea
+          id="rf-subject-desc"
+          v-model="form.subjectDescription"
+          class="field__textarea"
+          placeholder="Ghi chú tổng quan về đối tượng (ví dụ: chuyên giả mạo shop uy tín, dùng nhiều nick clone...)"
+        ></textarea>
       </div>
 
       <div class="repeat-list">
