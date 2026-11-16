@@ -579,6 +579,38 @@ h3 {
   animation: heroFrameSettle 820ms 80ms var(--m-ease-enter) both;
 }
 
+.modal-close-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background-color 140ms var(--ease),
+    border-color 140ms var(--ease),
+    color 140ms var(--ease),
+    transform 90ms var(--ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .modal-close-x:hover {
+    background: #dc2626;
+    border-color: #dc2626;
+    color: #ffffff;
+  }
+}
+
+.modal-close-x:active {
+  transform: scale(0.94);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

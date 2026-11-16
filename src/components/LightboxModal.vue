@@ -65,24 +65,17 @@ onBeforeUnmount(() => {
     >
       <div class="lightbox__topbar">
         <span class="mono lightbox__counter">{{ activeIndex + 1 }} / {{ images.length }}</span>
-        <div class="lightbox__actions">
-          <a
-            :href="images[activeIndex]"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="lightbox__btn"
-          >
-            Mở ảnh gốc
-          </a>
-          <button
-            type="button"
-            class="lightbox__btn"
-            aria-label="Đóng trình xem ảnh"
-            @click="emit('close')"
-          >
-            Đóng (Esc)
-          </button>
-        </div>
+        <button
+          type="button"
+          class="modal-close-x"
+          aria-label="Đóng trình xem ảnh"
+          title="Đóng (Esc)"
+          @click="emit('close')"
+        >
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
+            <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
       </div>
 
       <button
@@ -141,30 +134,6 @@ onBeforeUnmount(() => {
 
 .lightbox__counter {
   font-size: var(--t-small);
-}
-
-.lightbox__actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.lightbox__btn {
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: var(--r-sm);
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-  font-size: var(--t-small);
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.lightbox__btn:hover {
-  background: rgba(255, 255, 255, 0.18);
 }
 
 .lightbox__stage {

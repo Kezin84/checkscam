@@ -600,13 +600,13 @@ function resolveBadgeStyle(label = '') {
             </div>
             <button
               type="button"
-              class="shop-modal__close"
+              class="modal-close-x"
               aria-label="Đóng chi tiết shop"
+              title="Đóng (Esc)"
               @click="closeDetailModal"
             >
-              <span>Đóng</span>
-              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
-                <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
+                <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
               </svg>
             </button>
           </div>
@@ -1565,26 +1565,5 @@ function resolveBadgeStyle(label = '') {
   font-size: 12px;
   font-weight: 600;
   color: var(--p-accent);
-}
-
-.shop-modal__close {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 32px;
-  padding: 0 12px;
-  border-radius: 999px;
-  border: 1px solid var(--p-line);
-  background: var(--p-surface);
-  color: var(--p-ink);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 140ms var(--ease), border-color 140ms var(--ease);
-}
-
-.shop-modal__close:hover {
-  background: var(--p-card);
-  border-color: var(--p-ink);
 }
 </style>

@@ -532,10 +532,14 @@ function handleSubmit() {
             </div>
             <button
               type="button"
-              class="btn btn--secondary btn--sm"
+              class="modal-close-x"
+              aria-label="Đóng"
+              title="Đóng (Esc)"
               @click="scamModalOpen = false"
             >
-              Đóng
+              <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
+                <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
             </button>
           </div>
 
