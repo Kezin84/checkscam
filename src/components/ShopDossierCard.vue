@@ -24,7 +24,19 @@ const props = defineProps({
 })
 
 const { findBank } = useBanks()
+const lightboxImages = ref([])
 const lightboxIdx = ref(-1)
+
+function openLightbox(images, idx = 0) {
+  const valid = (Array.isArray(images) ? images : []).filter(Boolean)
+  if (!valid.length) return
+  lightboxImages.value = valid
+  lightboxIdx.value = idx
+}
+
+function closeLightbox() {
+  lightboxIdx.value = -1
+}
 
 const bankList = computed(() => {
   return Array.isArray(props.shop.bankAccounts) ? props.shop.bankAccounts : []
@@ -83,18 +95,25 @@ function formatBankCopyValue(b) {
     </div>
 
     <div class="shop-card__identity">
-      <div class="shop-card__avatar">
+      <button
+        v-if="shop.avatar"
+        type="button"
+        class="m-zoom shop-card__avatar shop-card__avatar--btn"
+        :aria-label="`Xem ảnh đại diện của ${shop.shopName}`"
+        @click="openLightbox([shop.avatar], 0)"
+      >
         <img
-          v-if="shop.avatar"
-          :src="optimizeCloudinaryUrl(shop.avatar, 160)"
+          :src="optimizeCloudinaryUrl(shop.avatar, 240)"
           :alt="`Ảnh đại diện ${shop.shopName}`"
           loading="lazy"
         />
-        <span v-else>{{ initials }}</span>
+      </button>
+      <div v-else class="shop-card__avatar">
+        <span>{{ initials }}</span>
       </div>
       <div class="shop-card__title-wrap">
         <h3 class="shop-card__name">{{ shop.shopName }}</h3>
-        <p v-if="shop.category" class="shop-card__category">{{ shop.category }}</p>
+        <span v-if="shop.category" class="shop-card__category">{{ shop.category }}</span>
         <p v-if="shop.ownerName" class="shop-card__owner">
           Chủ sở hữu: <strong>{{ shop.ownerName }}</strong>
         </p>
@@ -104,21 +123,24 @@ function formatBankCopyValue(b) {
       </div>
     </div>
 
-    <div v-if="galleryList.length" class="shop-card__gallery">
-      <button
-        v-for="(img, idx) in galleryList"
-        :key="img + idx"
-        type="button"
-        class="m-zoom shop-card__thumb"
-        :aria-label="`Xem ảnh menu hoặc sản phẩm ${idx + 1} của ${shop.shopName}`"
-        @click="lightboxIdx = idx"
-      >
-        <img
-          :src="optimizeCloudinaryUrl(img, 240)"
-          :alt="`Ảnh giới thiệu ${idx + 1} của ${shop.shopName}`"
-          loading="lazy"
-        />
-      </button>
+    <div v-if="galleryList.length" class="shop-card__section">
+      <span class="label">Hình ảnh / Menu quán ({{ galleryList.length }})</span>
+      <div class="shop-card__gallery">
+        <button
+          v-for="(img, idx) in galleryList"
+          :key="img + idx"
+          type="button"
+          class="m-zoom shop-card__thumb"
+          :aria-label="`Xem ảnh menu hoặc sản phẩm ${idx + 1} của ${shop.shopName}`"
+          @click="openLightbox(galleryList, idx)"
+        >
+          <img
+            :src="optimizeCloudinaryUrl(img, 240)"
+            :alt="`Ảnh giới thiệu ${idx + 1} của ${shop.shopName}`"
+            loading="lazy"
+          />
+        </button>
+      </div>
     </div>
 
     <p v-if="shop.description" class="shop-card__desc">
@@ -126,7 +148,11 @@ function formatBankCopyValue(b) {
     </p>
 
     <div class="shop-card__guardrail">
-      Chỉ chuyển khoản đúng số tài khoản chính chủ niêm yết bên dưới. Nếu người bán gửi số tài khoản khác dù trùng tên trang cá nhân, hãy dừng giao dịch ngay.
+      <svg class="shop-card__guardrail-icon" viewBox="0 0 18 18" width="17" height="17" fill="none" aria-hidden="true">
+        <path d="M9 1.8L15 4.2V8.7C15 12.4 12.4 15.4 9 16.4C5.6 15.4 3 12.4 3 8.7V4.2L9 1.8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+        <path d="M6.3 9.1L8.1 10.9L11.8 7.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <span>Chỉ chuyển khoản đúng số tài khoản chính chủ niêm yết bên dưới. Nếu người bán gửi số tài khoản khác dù trùng tên trang cá nhân, hãy dừng giao dịch ngay.</span>
     </div>
 
     <!-- Official Bank Accounts -->
@@ -207,9 +233,9 @@ function formatBankCopyValue(b) {
     </div>
 
     <LightboxModal
-      :images="galleryList"
+      :images="lightboxImages"
       :active-index="lightboxIdx"
-      @close="lightboxIdx = -1"
+      @close="closeLightbox"
       @change="(i) => (lightboxIdx = i)"
     />
   </article>
@@ -231,6 +257,8 @@ function formatBankCopyValue(b) {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  padding-bottom: var(--s-3);
+  border-bottom: 1px solid var(--p-line);
 }
 
 .shop-card__badges {
@@ -254,25 +282,37 @@ function formatBankCopyValue(b) {
 
 .shop-card__identity {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
 }
 
 .shop-card__avatar {
-  width: 52px;
-  height: 52px;
+  width: 64px;
+  height: 64px;
+  padding: 0;
   border-radius: var(--r-md);
   border: 1px solid var(--p-line);
   background: var(--p-surface);
   color: var(--p-ink);
   font-family: var(--font-display);
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(24, 37, 43, 0.08);
+}
+
+.shop-card__avatar--btn {
+  cursor: zoom-in;
+  transition: border-color 150ms var(--ease), box-shadow 150ms var(--ease);
+}
+
+.shop-card__avatar--btn:hover {
+  border-color: var(--p-accent);
+  box-shadow: 0 2px 8px rgba(13, 116, 128, 0.16);
 }
 
 .shop-card__avatar img {
@@ -284,19 +324,30 @@ function formatBankCopyValue(b) {
 .shop-card__title-wrap {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  min-width: 0;
 }
 
 .shop-card__name {
   font-size: var(--t-h3);
+  font-weight: 600;
   color: var(--p-ink);
+  line-height: 1.25;
 }
 
 .shop-card__category {
-  font-size: var(--t-small);
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 2px 8px;
+  margin-top: 2px;
+  border-radius: var(--r-sm);
+  background: var(--p-accent-soft);
+  border: 1px solid rgba(13, 116, 128, 0.22);
+  font-size: var(--t-label);
   font-weight: 500;
   color: var(--p-accent);
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .shop-card__owner,
@@ -331,6 +382,9 @@ function formatBankCopyValue(b) {
 }
 
 .shop-card__guardrail {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   padding: 12px 14px;
   border-radius: var(--r-sm);
   background: var(--p-verified-bg);
@@ -338,6 +392,11 @@ function formatBankCopyValue(b) {
   color: var(--p-verified);
   font-size: var(--t-small);
   line-height: 1.5;
+}
+
+.shop-card__guardrail-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .shop-card__section {

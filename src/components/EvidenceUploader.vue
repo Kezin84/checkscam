@@ -27,6 +27,8 @@ const fileInputRef = ref(null)
 const isDragging = ref(false)
 const activeUploads = ref([])
 const uploadError = ref('')
+const dragIndex = ref(null)
+const dragOverIndex = ref(null)
 
 function triggerBrowse() {
   fileInputRef.value?.click()
@@ -75,6 +77,7 @@ async function processFiles(fileList) {
 
 function handleDrop(e) {
   isDragging.value = false
+  if (e.dataTransfer?.types?.includes('text/x-uploader-index')) return
   if (e.dataTransfer?.files?.length) {
     processFiles(e.dataTransfer.files)
   }
@@ -99,6 +102,52 @@ function handlePaste(e) {
 function removeAt(idx) {
   const next = props.modelValue.filter((_, i) => i !== idx)
   emit('update:modelValue', next)
+}
+
+function moveItem(fromIdx, toIdx) {
+  if (
+    fromIdx === toIdx ||
+    fromIdx < 0 ||
+    toIdx < 0 ||
+    fromIdx >= props.modelValue.length ||
+    toIdx >= props.modelValue.length
+  ) {
+    return
+  }
+  const next = [...props.modelValue]
+  const [moved] = next.splice(fromIdx, 1)
+  next.splice(toIdx, 0, moved)
+  emit('update:modelValue', next)
+}
+
+function onThumbDragStart(idx, e) {
+  if (props.single || props.modelValue.length < 2) return
+  dragIndex.value = idx
+  dragOverIndex.value = idx
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/x-uploader-index', String(idx))
+  }
+}
+
+function onThumbDragOver(idx, e) {
+  if (dragIndex.value === null) return
+  e.preventDefault()
+  dragOverIndex.value = idx
+}
+
+function onThumbDrop(idx, e) {
+  if (dragIndex.value === null) return
+  e.preventDefault()
+  e.stopPropagation()
+  moveItem(dragIndex.value, idx)
+  dragIndex.value = null
+  dragOverIndex.value = null
+}
+
+function onThumbDragEnd() {
+  dragIndex.value = null
+  dragOverIndex.value = null
 }
 </script>
 
@@ -151,8 +200,27 @@ function removeAt(idx) {
     <p v-if="uploadError" class="field__error">{{ uploadError }}</p>
 
     <div v-if="modelValue.length" class="uploader__grid" :class="{ 'uploader__grid--single': single }">
-      <div v-for="(imgUrl, idx) in modelValue" :key="imgUrl + idx" class="uploader__thumb">
+      <div
+        v-for="(imgUrl, idx) in modelValue"
+        :key="imgUrl + idx"
+        class="uploader__thumb"
+        :class="{
+          'is-sortable': !single && modelValue.length > 1,
+          'is-dragging-item': dragIndex === idx,
+          'is-drop-target': dragOverIndex === idx && dragIndex !== null && dragIndex !== idx
+        }"
+        :draggable="!single && modelValue.length > 1"
+        @dragstart="onThumbDragStart(idx, $event)"
+        @dragover="onThumbDragOver(idx, $event)"
+        @drop="onThumbDrop(idx, $event)"
+        @dragend="onThumbDragEnd"
+      >
         <img :src="optimizeCloudinaryUrl(imgUrl, 360)" :alt="`Ảnh tải lên ${idx + 1}`" loading="lazy" />
+
+        <span v-if="!single && modelValue.length > 1" class="mono uploader__order">
+          #{{ idx + 1 }}
+        </span>
+
         <button
           type="button"
           class="uploader__remove"
@@ -163,6 +231,31 @@ function removeAt(idx) {
             <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" />
           </svg>
         </button>
+
+        <div v-if="!single && modelValue.length > 1" class="uploader__reorder">
+          <button
+            type="button"
+            class="uploader__move"
+            :disabled="idx === 0"
+            :aria-label="`Chuyển ảnh ${idx + 1} lên trước`"
+            @click.stop="moveItem(idx, idx - 1)"
+          >
+            <svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true">
+              <path d="M10 3.5L5.5 8L10 12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="uploader__move"
+            :disabled="idx === modelValue.length - 1"
+            :aria-label="`Chuyển ảnh ${idx + 1} ra sau`"
+            @click.stop="moveItem(idx, idx + 1)"
+          >
+            <svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true">
+              <path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -271,6 +364,68 @@ function removeAt(idx) {
   overflow: hidden;
   border: 1px solid var(--p-line);
   background: var(--p-surface);
+  transition: transform 140ms var(--ease), border-color 140ms var(--ease), opacity 140ms var(--ease);
+}
+
+.uploader__thumb.is-sortable {
+  cursor: grab;
+}
+
+.uploader__thumb.is-sortable:active {
+  cursor: grabbing;
+}
+
+.uploader__thumb.is-dragging-item {
+  opacity: 0.45;
+}
+
+.uploader__thumb.is-drop-target {
+  border-color: var(--p-action);
+  box-shadow: 0 0 0 2px var(--p-accent-soft);
+}
+
+.uploader__order {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+  background: rgba(24, 37, 43, 0.85);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  pointer-events: none;
+}
+
+.uploader__reorder {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.uploader__move {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-sm);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(24, 37, 43, 0.85);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.uploader__move:hover:not(:disabled) {
+  background: var(--p-action);
+}
+
+.uploader__move:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .uploader__grid--single .uploader__thumb {
