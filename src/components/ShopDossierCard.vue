@@ -708,8 +708,8 @@ function resolveBadgeStyle(label = '') {
 
 .shop-card--in-modal .shop-card__gallery {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 12px;
 }
 
 .shop-card--in-modal .shop-card__thumb {
@@ -1211,25 +1211,31 @@ function resolveBadgeStyle(label = '') {
   inset: 0;
   z-index: 75;
   background: rgba(16, 25, 29, 0.72);
-  backdrop-filter: blur(3px);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
 }
 
 .shop-modal {
-  width: min(1180px, 100%);
-  max-height: calc(100svh - 48px);
+  width: 100%;
+  height: 100svh;
+  max-height: 100svh;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   background: #f3f6f8;
-  border: 1px solid rgba(31, 48, 56, 0.14);
-  border-radius: 16px;
-  box-shadow: 0 28px 72px rgba(16, 25, 29, 0.32);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .shop-modal--no-gallery {
-  width: min(860px, 100%);
+  width: 100%;
+}
+
+.shop-modal :deep(.shop-card--in-modal) {
+  flex: 1;
 }
 
 .shop-modal__bar {
