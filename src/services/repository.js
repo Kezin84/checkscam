@@ -365,6 +365,21 @@ function sanitizeLinks(links = []) {
     .filter(Boolean)
 }
 
+function sanitizeBadges(badges = []) {
+  const seen = new Set()
+  const out = []
+  for (const raw of Array.isArray(badges) ? badges : []) {
+    const label = String(raw || '').trim()
+    if (!label) continue
+    const key = label.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(label)
+    if (out.length >= 8) break
+  }
+  return out
+}
+
 export function prepareScamReportPayload(raw, existingCreatedAt = null) {
   const bankAccounts = sanitizeBankAccounts(raw.bankAccounts)
   const socials = sanitizeSocials(raw.socials)
@@ -414,7 +429,8 @@ export function prepareTrustedShopPayload(raw, existingCreatedAt = null) {
     category,
     categoryKey: toSafeIndexKey(category),
     description: String(raw.description || '').trim(),
-    verified: true,
+    verified: raw.verified !== false,
+    badges: sanitizeBadges(raw.badges),
     bankAccounts,
     socials,
     createdAt: existingCreatedAt || Date.now(),

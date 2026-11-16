@@ -45,6 +45,17 @@ function emptyBank() {
   }
 }
 
+const SHOP_BADGE_PRESETS = [
+  'Quán ngon',
+  'Ship hàng nhanh',
+  'Giá minh bạch',
+  'Hỗ trợ 24/7',
+  'Đóng gói kỹ',
+  'Giao tận nơi',
+  'Trung gian uy tín',
+  'Hàng chuẩn Việt'
+]
+
 function createInitialState(src) {
   return {
     shopName: src?.shopName || '',
@@ -52,6 +63,8 @@ function createInitialState(src) {
     address: src?.address || '',
     category: src?.category || '',
     description: src?.description || '',
+    verified: src?.verified !== false,
+    badges: Array.isArray(src?.badges) ? [...src.badges] : [],
     avatarList: src?.avatar ? [src.avatar] : [],
     galleryImages: Array.isArray(src?.galleryImages) ? [...src.galleryImages] : [],
     socials:
@@ -67,6 +80,7 @@ function createInitialState(src) {
 }
 
 const form = reactive(createInitialState(props.initialData))
+const customBadgeInput = ref('')
 const avatarUploading = ref(false)
 const galleryUploading = ref(false)
 const isUploading = computed(() => avatarUploading.value || galleryUploading.value)
@@ -143,6 +157,34 @@ function onSelectBank(bankRow, bankMeta) {
   bankRow.bankLogo = bankMeta.logo || ''
 }
 
+function hasBadge(label) {
+  const key = String(label || '').trim().toLowerCase()
+  return form.badges.some((b) => b.trim().toLowerCase() === key)
+}
+
+function togglePresetBadge(label) {
+  const key = label.trim().toLowerCase()
+  const idx = form.badges.findIndex((b) => b.trim().toLowerCase() === key)
+  if (idx >= 0) {
+    form.badges.splice(idx, 1)
+  } else if (form.badges.length < 8) {
+    form.badges.push(label.trim())
+  }
+}
+
+function addCustomBadge() {
+  const val = customBadgeInput.value.trim()
+  if (!val) return
+  if (!hasBadge(val) && form.badges.length < 8) {
+    form.badges.push(val)
+  }
+  customBadgeInput.value = ''
+}
+
+function removeBadge(idx) {
+  form.badges.splice(idx, 1)
+}
+
 function handleSubmit() {
   errors.shopName = ''
   errors.category = ''
@@ -170,6 +212,8 @@ function handleSubmit() {
     address: form.address.trim(),
     category: form.category.trim(),
     description: form.description.trim(),
+    verified: Boolean(form.verified),
+    badges: form.badges,
     avatar: form.avatarList[0] || '',
     galleryImages: form.galleryImages,
     socials: form.socials.map((s) => ({
@@ -256,6 +300,74 @@ function handleSubmit() {
             class="field__input"
             placeholder="Ví dụ: Đã đối chiếu giấy tờ & tài khoản ngân hàng chính chủ"
           />
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="verify-toggle">
+          <input v-model="form.verified" type="checkbox" class="verify-toggle__check" />
+          <svg viewBox="0 0 20 20" width="18" height="18" fill="none" aria-hidden="true">
+            <path
+              d="M10 1.4L12.3 2.8L14.9 2.6L16.1 5L18.4 6.3L18.1 8.9L19.4 11.2L17.6 13.1L17.4 15.7L14.9 16.5L13.3 18.6L10.7 17.9L8.3 19.1L6.3 17.3L3.7 17.2L3 14.7L1 13L1.8 10.5L0.9 8L2.9 6.3L3.4 3.7L6 3.3L7.8 1.5L10 1.4Z"
+              fill="#1877F2"
+            />
+            <path
+              d="M6.7 10.3L8.9 12.5L13.6 7.7"
+              stroke="#ffffff"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span>Hiển thị icon tick xanh xác minh ngay cạnh tên quán</span>
+        </label>
+      </div>
+
+      <div class="field">
+        <span class="field__label">Badge nổi bật dưới tên quán (tối đa 8 badge)</span>
+
+        <div class="badge-presets">
+          <button
+            v-for="preset in SHOP_BADGE_PRESETS"
+            :key="preset"
+            type="button"
+            class="badge-chip"
+            :class="{ 'is-active': hasBadge(preset) }"
+            @click="togglePresetBadge(preset)"
+          >
+            <span>{{ hasBadge(preset) ? '✓' : '+' }} {{ preset }}</span>
+          </button>
+        </div>
+
+        <div class="cat-control">
+          <input
+            v-model="customBadgeInput"
+            type="text"
+            class="field__input cat-control__input"
+            placeholder="Hoặc tự nhập badge (ví dụ: Freeship Makati, Mở 24/7...)"
+            @keydown.enter.prevent="addCustomBadge"
+          />
+          <button
+            type="button"
+            class="btn btn--secondary cat-control__btn"
+            @click="addCustomBadge"
+          >
+            Thêm
+          </button>
+        </div>
+
+        <div v-if="form.badges.length" class="badge-selected">
+          <span v-for="(badge, bIdx) in form.badges" :key="badge + bIdx" class="badge-selected__item">
+            <span>{{ badge }}</span>
+            <button
+              type="button"
+              class="badge-selected__rm"
+              :aria-label="`Xóa badge ${badge}`"
+              @click="removeBadge(bIdx)"
+            >
+              ×
+            </button>
+          </span>
         </div>
       </div>
 
@@ -565,6 +677,90 @@ function handleSubmit() {
   min-height: 48px;
   padding: 0 18px;
   flex-shrink: 0;
+}
+
+.verify-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--p-line);
+  background: var(--p-bg);
+  font-size: var(--t-small);
+  font-weight: 500;
+  color: var(--p-ink);
+  cursor: pointer;
+}
+
+.verify-toggle__check {
+  width: 18px;
+  height: 18px;
+  accent-color: #1877f2;
+  cursor: pointer;
+}
+
+.badge-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.badge-chip {
+  min-height: 32px;
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--p-line);
+  background: var(--p-bg);
+  color: var(--p-text);
+  font-size: var(--t-label);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 140ms var(--ease), border-color 140ms var(--ease), color 140ms var(--ease);
+}
+
+.badge-chip:hover {
+  border-color: var(--p-accent);
+}
+
+.badge-chip.is-active {
+  background: var(--p-accent-soft);
+  border-color: var(--p-accent);
+  color: var(--p-accent);
+}
+
+.badge-selected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.badge-selected__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  background: var(--p-surface);
+  border: 1px solid var(--p-line-strong);
+  font-size: var(--t-label);
+  font-weight: 500;
+  color: var(--p-ink);
+}
+
+.badge-selected__rm {
+  border: none;
+  background: transparent;
+  color: var(--p-muted);
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+.badge-selected__rm:hover {
+  color: var(--p-danger);
 }
 
 .cat-modal-backdrop {

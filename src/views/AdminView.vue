@@ -682,7 +682,8 @@ const securityRulesJson = `{
                   <div class="admin-row__info">
                     <div class="admin-row__title-line">
                       <strong>{{ shop.shopName }}</strong>
-                      <span class="stamp stamp--verified">Đã xác minh</span>
+                      <span v-if="shop.verified !== false" class="stamp stamp--verified">Đã xác minh</span>
+                      <span v-else class="stamp">Chưa xác minh</span>
                     </div>
                     <span class="mono admin-row__meta">
                       Chủ shop: {{ shop.ownerName || '—' }}

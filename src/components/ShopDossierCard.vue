@@ -6,7 +6,6 @@ import LightboxModal from './LightboxModal.vue'
 import { useBanks } from '@/services/banks'
 import { optimizeCloudinaryUrl } from '@/services/cloudinary'
 import {
-  formatDateVi,
   platformLabel,
   resolveSocialId,
   resolveSocialUrl
@@ -50,6 +49,12 @@ const galleryList = computed(() => {
   return Array.isArray(props.shop.galleryImages) ? props.shop.galleryImages.filter(Boolean) : []
 })
 
+const badgeList = computed(() => {
+  return Array.isArray(props.shop.badges) ? props.shop.badges.filter(Boolean) : []
+})
+
+const isVerified = computed(() => props.shop.verified !== false)
+
 const initials = computed(() => {
   const words = String(props.shop.shopName || 'S')
     .trim()
@@ -80,20 +85,7 @@ function formatBankCopyValue(b) {
 </script>
 
 <template>
-  <article class="card shop-card">
-    <div class="shop-card__head">
-      <div class="shop-card__badges">
-        <span class="stamp shop-card__verified">
-          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" aria-hidden="true">
-            <circle cx="8" cy="8" r="7.5" fill="#ffffff" />
-            <path d="M4.6 8.2L6.9 10.5L11.5 5.7" stroke="#086552" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <span>Đã xác minh</span>
-        </span>
-      </div>
-      <span class="mono shop-card__date">Xác minh {{ formatDateVi(shop.createdAt) }}</span>
-    </div>
-
+  <article class="card shop-card" :class="{ 'shop-card--verified': isVerified }">
     <div class="shop-card__identity">
       <button
         v-if="shop.avatar"
@@ -112,8 +104,38 @@ function formatBankCopyValue(b) {
         <span>{{ initials }}</span>
       </div>
       <div class="shop-card__title-wrap">
-        <h3 class="shop-card__name">{{ shop.shopName }}</h3>
+        <div class="shop-card__name-row">
+          <h3 class="shop-card__name">{{ shop.shopName }}</h3>
+          <span
+            v-if="isVerified"
+            class="shop-card__fb-tick"
+            title="Shop đã xác minh"
+            aria-label="Shop đã xác minh"
+          >
+            <svg viewBox="0 0 20 20" width="19" height="19" fill="none" aria-hidden="true">
+              <path
+                d="M10 1.4L12.3 2.8L14.9 2.6L16.1 5L18.4 6.3L18.1 8.9L19.4 11.2L17.6 13.1L17.4 15.7L14.9 16.5L13.3 18.6L10.7 17.9L8.3 19.1L6.3 17.3L3.7 17.2L3 14.7L1 13L1.8 10.5L0.9 8L2.9 6.3L3.4 3.7L6 3.3L7.8 1.5L10 1.4Z"
+                fill="#1877F2"
+              />
+              <path
+                d="M6.7 10.3L8.9 12.5L13.6 7.7"
+                stroke="#ffffff"
+                stroke-width="2.1"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+        </div>
+
         <span v-if="shop.category" class="shop-card__category">{{ shop.category }}</span>
+
+        <div v-if="badgeList.length" class="shop-card__tags">
+          <span v-for="(badge, bIdx) in badgeList" :key="badge + bIdx" class="shop-card__tag">
+            {{ badge }}
+          </span>
+        </div>
+
         <p v-if="shop.ownerName" class="shop-card__owner">
           Chủ sở hữu: <strong>{{ shop.ownerName }}</strong>
         </p>
@@ -246,38 +268,12 @@ function formatBankCopyValue(b) {
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
-  border-left: 3px solid var(--p-verified);
   content-visibility: auto;
   contain-intrinsic-size: auto 380px;
 }
 
-.shop-card__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding-bottom: var(--s-3);
-  border-bottom: 1px solid var(--p-line);
-}
-
-.shop-card__badges {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
-.shop-card__verified {
-  background: var(--p-verified);
-  border-color: var(--p-verified);
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.shop-card__date {
-  font-size: var(--t-label);
-  color: var(--p-muted);
+.shop-card--verified {
+  border-left: 3px solid #1877f2;
 }
 
 .shop-card__identity {
@@ -328,11 +324,26 @@ function formatBankCopyValue(b) {
   min-width: 0;
 }
 
+.shop-card__name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
 .shop-card__name {
   font-size: var(--t-h3);
   font-weight: 600;
   color: var(--p-ink);
   line-height: 1.25;
+}
+
+.shop-card__fb-tick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transform: translateY(1px);
 }
 
 .shop-card__category {
@@ -348,6 +359,26 @@ function formatBankCopyValue(b) {
   font-weight: 500;
   color: var(--p-accent);
   line-height: 1.35;
+}
+
+.shop-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.shop-card__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--r-sm);
+  background: var(--p-surface);
+  border: 1px solid var(--p-line);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--p-ink);
+  line-height: 1.4;
 }
 
 .shop-card__owner,
