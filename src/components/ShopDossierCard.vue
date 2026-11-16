@@ -389,7 +389,7 @@ function resolveBadgeStyle(label = '') {
     <div v-if="bankList.length" class="shop-card__col-banks shop-card__section">
       <span class="label">Tài khoản ngân hàng chính chủ</span>
 
-      <div class="credit-list">
+      <div class="credit-list" :class="{ 'credit-list--two': !inModal && bankList.length > 1 }">
         <div v-for="(bank, bIdx) in bankList" :key="bIdx" class="credit-card">
           <div class="credit-card__top">
             <div class="credit-card__brand">
@@ -924,6 +924,61 @@ function resolveBadgeStyle(label = '') {
 
 .shop-card:not(.shop-card--in-modal) .credit-list {
   gap: 8px;
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-list--two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-list--two .credit-card {
+  padding: 11px 12px;
+  gap: 6px;
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-list--two .credit-card__brand {
+  gap: 7px;
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-list--two .credit-card__logo {
+  width: 38px;
+  height: 24px;
+  padding: 2px 3px;
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-list--two .credit-card__logo img {
+  max-height: 18px;
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-list--two .credit-card__bank-name {
+  font-size: 13px;
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-list--two :deep(.credit-card__copy) {
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-list--two .credit-card__number {
+  font-size: 14.5px;
+  letter-spacing: 0.03em;
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-list--two .credit-card__holder {
+  font-size: 11.5px;
+}
+
+.shop-card:not(.shop-card--in-modal) .credit-list--two .credit-card__verified {
+  font-size: 9px;
+  padding: 2px 6px;
+}
+
+@media (max-width: 520px) {
+  .shop-card:not(.shop-card--in-modal) .credit-list--two {
+    grid-template-columns: 1fr;
+  }
 }
 
 .shop-card:not(.shop-card--in-modal) .credit-card {
