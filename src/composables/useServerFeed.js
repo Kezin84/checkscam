@@ -56,6 +56,10 @@ export function useServerFeed({ fetchPage, searchFn, filterRef, batchSize = 6 })
   }
 
   async function runSearch() {
+    if (typeof searchFn !== 'function') {
+      await loadFirstPage()
+      return
+    }
     const q = keyword.value.trim()
     if (!q) {
       await loadFirstPage()
