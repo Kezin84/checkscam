@@ -39,6 +39,11 @@ const metaLoading = vueRef(true)
 // Admin pending submissions queue (small unreviewed queue, admin-only)
 const pendingReports = vueRef([])
 const pendingLoading = vueRef(false)
+export const feedCacheVersion = vueRef(0)
+
+function bumpFeedCache() {
+  feedCacheVersion.value += 1
+}
 
 let metaSubscribed = false
 let pendingUnsubscribe = null
@@ -554,6 +559,7 @@ export async function approvePendingReport(pendingId, editedData) {
 
   await update(dbRef(db), updates)
   await adjustSiteMetaForReport(1)
+  bumpFeedCache()
   return approvedId
 }
 
@@ -595,6 +601,7 @@ export async function saveApprovedReport(raw, reportId = null) {
   if (isNew || !oldData) {
     await adjustSiteMetaForReport(1)
   }
+  bumpFeedCache()
   return targetId
 }
 
@@ -615,6 +622,7 @@ export async function deleteApprovedReport(reportId) {
 
   await update(dbRef(db), updates)
   await adjustSiteMetaForReport(-1)
+  bumpFeedCache()
 }
 
 // Admin CRUD for trusted_shops (atomic index + category sync)
@@ -656,6 +664,7 @@ export async function saveTrustedShop(raw, shopId = null) {
     newCatKey: payload.categoryKey,
     newCatLabel: payload.category
   })
+  bumpFeedCache()
   return targetId
 }
 
@@ -682,6 +691,7 @@ export async function deleteTrustedShop(shopId) {
     newCatKey: '',
     newCatLabel: ''
   })
+  bumpFeedCache()
 }
 
 export function useRepository() {

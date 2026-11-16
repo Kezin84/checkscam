@@ -1,6 +1,10 @@
 <script setup>
 import { ref, computed, watch, defineAsyncComponent } from 'vue'
-import { useRepository, fetchShopsPage } from '@/services/repository'
+import {
+  useRepository,
+  fetchShopsPage,
+  searchRecordsOnServer
+} from '@/services/repository'
 import { useServerFeed } from '@/composables/useServerFeed'
 
 const ShopDossierCard = defineAsyncComponent(() => import('@/components/ShopDossierCard.vue'))
@@ -20,14 +24,26 @@ const {
   items: visibleShops,
   loading,
   loadingMore,
+  searching,
   hasMore,
+  keyword,
   sentinelRef,
-  loadNextPage
+  loadNextPage,
+  triggerSearchNow
 } = useServerFeed({
+  cacheKey: 'shops',
   batchSize: 6,
   filterRef: activeCategory,
   fetchPage: ({ batchSize, cursorKey, filter }) =>
-    fetchShopsPage({ batchSize, cursorKey, category: filter })
+    fetchShopsPage({ batchSize, cursorKey, category: filter }),
+  searchFn: async (q, filter) => {
+    const res = await searchRecordsOnServer(q, {
+      includeReports: false,
+      includeShops: true,
+      category: filter
+    })
+    return res.shops.map((entry) => entry.item)
+  }
 })
 </script>
 
@@ -59,29 +75,36 @@ const {
         </a>
       </div>
 
-      <div v-if="dbCategories.length" class="filter-chips" role="tablist" aria-label="Lọc theo lĩnh vực">
-        <button
-          type="button"
-          class="filter-chip"
-          :class="{ 'is-active': activeCategory === 'all' }"
-          @click="activeCategory = 'all'"
-        >
-          Tất cả ({{ siteMeta.shopsCount }})
-        </button>
-        <button
-          v-for="cat in dbCategories"
-          :key="cat.key"
-          type="button"
-          class="filter-chip"
-          :class="{ 'is-active': activeCategory === cat.label }"
-          @click="activeCategory = cat.label"
-        >
-          {{ cat.label }} ({{ cat.count }})
-        </button>
+      <div class="filter-bar card">
+        <div class="field filter-bar__search">
+          <label for="shop-filter-q" class="field__label">Tìm theo tên shop, SĐT hoặc số tài khoản</label>
+          <input
+            id="shop-filter-q"
+            v-model="keyword"
+            type="search"
+            class="field__input"
+            placeholder="Nhập tên shop, chủ tài khoản, SĐT hoặc STK..."
+            @keydown.enter.prevent="triggerSearchNow"
+          />
+        </div>
+
+        <div class="field filter-bar__select">
+          <label for="shop-filter-cat" class="field__label">Lĩnh vực hoạt động</label>
+          <select id="shop-filter-cat" v-model="activeCategory" class="field__select">
+            <option value="all">Tất cả lĩnh vực ({{ siteMeta.shopsCount }})</option>
+            <option v-for="cat in dbCategories" :key="cat.key" :value="cat.label">
+              {{ cat.label }} ({{ cat.count }})
+            </option>
+          </select>
+        </div>
       </div>
 
-      <div v-if="loading" class="status-box">
-        Đang tải danh sách shop đã xác minh...
+      <div v-if="loading && visibleShops.length === 0" class="cards-grid" aria-busy="true">
+        <div v-for="n in 4" :key="n" class="card skeleton-card">
+          <div class="skeleton-line skeleton-line--lg"></div>
+          <div class="skeleton-line skeleton-line--md"></div>
+          <div class="skeleton-line skeleton-line--sm"></div>
+        </div>
       </div>
 
       <template v-else-if="visibleShops.length > 0">
@@ -101,9 +124,13 @@ const {
         </div>
       </template>
 
+      <div v-else-if="searching" class="status-box">
+        Đang tìm kiếm thêm trên hệ thống...
+      </div>
+
       <div v-else class="card status-box">
-        <h3>Chưa có hồ sơ shop nào trong mục này.</h3>
-        <p class="muted">Thử chuyển sang lĩnh vực khác hoặc quay lại sau.</p>
+        <h3>Không có hồ sơ shop nào phù hợp với bộ lọc hiện tại.</h3>
+        <p class="muted">Thử xóa từ khóa tìm kiếm hoặc chuyển sang lĩnh vực khác.</p>
       </div>
     </div>
   </section>
@@ -129,35 +156,11 @@ const {
   gap: var(--s-3);
 }
 
-.filter-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: var(--s-5);
-}
-
-.filter-chip {
-  min-height: 36px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--p-line);
-  background: var(--p-card);
-  color: var(--p-text);
-  font-size: var(--t-small);
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 140ms var(--ease), border-color 140ms var(--ease), color 140ms var(--ease);
-}
-
-.filter-chip:hover {
-  border-color: var(--p-accent);
-  color: var(--p-accent);
-}
-
-.filter-chip.is-active {
-  background: var(--p-accent);
-  border-color: var(--p-accent);
-  color: #ffffff;
+.filter-bar {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--s-4);
+  margin-bottom: var(--s-6);
 }
 
 .cards-grid {
@@ -165,6 +168,32 @@ const {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--s-5);
   align-items: start;
+}
+
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 220px;
+}
+
+.skeleton-line {
+  height: 16px;
+  border-radius: var(--r-sm);
+  background: var(--p-surface);
+}
+
+.skeleton-line--lg {
+  width: 65%;
+  height: 22px;
+}
+
+.skeleton-line--md {
+  width: 85%;
+}
+
+.skeleton-line--sm {
+  width: 45%;
 }
 
 .lazy-more {
@@ -181,6 +210,7 @@ const {
 }
 
 @media (max-width: 960px) {
+  .filter-bar,
   .cards-grid {
     grid-template-columns: minmax(0, 1fr);
   }

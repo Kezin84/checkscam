@@ -1,7 +1,11 @@
 <script setup>
 import { ref, defineAsyncComponent } from 'vue'
-import { useRepository, fetchReportsPage } from '@/services/repository'
-import { PLATFORMS } from '@/utils/normalize'
+import {
+  useRepository,
+  fetchReportsPage,
+  searchRecordsOnServer
+} from '@/services/repository'
+import PlatformSelect from '@/components/PlatformSelect.vue'
 import { useServerFeed } from '@/composables/useServerFeed'
 
 const ReportDossierCard = defineAsyncComponent(() => import('@/components/ReportDossierCard.vue'))
@@ -13,14 +17,26 @@ const {
   items: visibleReports,
   loading,
   loadingMore,
+  searching,
   hasMore,
+  keyword,
   sentinelRef,
-  loadNextPage
+  loadNextPage,
+  triggerSearchNow
 } = useServerFeed({
+  cacheKey: 'alerts',
   batchSize: 6,
   filterRef: activePlatform,
   fetchPage: ({ batchSize, cursorKey, filter }) =>
-    fetchReportsPage({ batchSize, cursorKey, platform: filter })
+    fetchReportsPage({ batchSize, cursorKey, platform: filter }),
+  searchFn: async (q, filter) => {
+    const res = await searchRecordsOnServer(q, {
+      includeReports: true,
+      includeShops: false,
+      platform: filter
+    })
+    return res.reports.map((entry) => entry.item)
+  }
 })
 </script>
 
@@ -43,29 +59,36 @@ const {
         </RouterLink>
       </div>
 
-      <div class="filter-chips" role="tablist" aria-label="Lọc theo nền tảng mạng xã hội">
-        <button
-          type="button"
-          class="filter-chip"
-          :class="{ 'is-active': activePlatform === 'all' }"
-          @click="activePlatform = 'all'"
-        >
-          Tất cả ({{ siteMeta.reportsCount }})
-        </button>
-        <button
-          v-for="plat in PLATFORMS"
-          :key="plat.id"
-          type="button"
-          class="filter-chip"
-          :class="{ 'is-active': activePlatform === plat.id }"
-          @click="activePlatform = plat.id"
-        >
-          {{ plat.label }}
-        </button>
+      <div class="filter-bar card">
+        <div class="field">
+          <label for="alert-filter-q" class="field__label">Tra cứu theo STK, SĐT, tên chủ thẻ hoặc link MXH</label>
+          <input
+            id="alert-filter-q"
+            v-model="keyword"
+            type="search"
+            class="field__input"
+            placeholder="Nhập số tài khoản, tên đối tượng, SĐT hoặc link..."
+            @keydown.enter.prevent="triggerSearchNow"
+          />
+        </div>
+
+        <div class="field">
+          <label for="alert-filter-plat" class="field__label">Nền tảng mạng xã hội</label>
+          <PlatformSelect
+            input-id="alert-filter-plat"
+            v-model="activePlatform"
+            include-all
+            :all-label="`Tất cả nền tảng (${siteMeta.reportsCount})`"
+          />
+        </div>
       </div>
 
-      <div v-if="loading" class="status-box">
-        Đang tải danh sách lừa đảo...
+      <div v-if="loading && visibleReports.length === 0" class="cards-grid" aria-busy="true">
+        <div v-for="n in 4" :key="n" class="card skeleton-card">
+          <div class="skeleton-line skeleton-line--lg"></div>
+          <div class="skeleton-line skeleton-line--md"></div>
+          <div class="skeleton-line skeleton-line--sm"></div>
+        </div>
       </div>
 
       <template v-else-if="visibleReports.length > 0">
@@ -85,9 +108,13 @@ const {
         </div>
       </template>
 
+      <div v-else-if="searching" class="status-box">
+        Đang tìm kiếm thêm trên hệ thống...
+      </div>
+
       <div v-else class="card status-box">
-        <h3>Chưa có hồ sơ lừa đảo nào trong mục này.</h3>
-        <p class="muted">Thử chuyển sang nền tảng khác hoặc gửi hồ sơ mới nếu bạn vừa phát hiện hành vi lừa đảo.</p>
+        <h3>Chưa tìm thấy hồ sơ lừa đảo phù hợp.</h3>
+        <p class="muted">Thử thay đổi từ khóa tra cứu hoặc gửi hồ sơ mới nếu bạn vừa phát hiện hành vi lừa đảo.</p>
       </div>
     </div>
   </section>
@@ -113,35 +140,13 @@ const {
   gap: var(--s-3);
 }
 
-.filter-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: var(--s-5);
-}
-
-.filter-chip {
-  min-height: 36px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--p-line);
-  background: var(--p-card);
-  color: var(--p-text);
-  font-size: var(--t-small);
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 140ms var(--ease), border-color 140ms var(--ease), color 140ms var(--ease);
-}
-
-.filter-chip:hover {
-  border-color: var(--p-accent);
-  color: var(--p-accent);
-}
-
-.filter-chip.is-active {
-  background: var(--p-accent);
-  border-color: var(--p-accent);
-  color: #ffffff;
+.filter-bar {
+  position: relative;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--s-4);
+  margin-bottom: var(--s-6);
 }
 
 .cards-grid {
@@ -149,6 +154,32 @@ const {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--s-5);
   align-items: start;
+}
+
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 220px;
+}
+
+.skeleton-line {
+  height: 16px;
+  border-radius: var(--r-sm);
+  background: var(--p-surface);
+}
+
+.skeleton-line--lg {
+  width: 65%;
+  height: 22px;
+}
+
+.skeleton-line--md {
+  width: 85%;
+}
+
+.skeleton-line--sm {
+  width: 45%;
 }
 
 .lazy-more {
@@ -165,6 +196,7 @@ const {
 }
 
 @media (max-width: 960px) {
+  .filter-bar,
   .cards-grid {
     grid-template-columns: minmax(0, 1fr);
   }
