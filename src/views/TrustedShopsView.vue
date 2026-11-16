@@ -216,7 +216,8 @@ const {
 .filter-pill-select {
   border-radius: 999px;
   border: 1.5px solid rgba(13, 116, 128, 0.34);
-  padding: 0 18px;
+  padding: 0 42px 0 18px;
+  background-position: right 16px center;
 }
 
 .filter-pill-select:hover {

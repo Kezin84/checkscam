@@ -132,8 +132,14 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(13, 116, 128, 0.3);
   cursor: pointer;
   text-align: left;
+}
+
+.platform-select__trigger:hover {
+  border-color: rgba(13, 116, 128, 0.56);
 }
 
 .platform-select__current {
@@ -153,7 +159,7 @@ onBeforeUnmount(() => {
 
 .platform-select__chevron {
   flex-shrink: 0;
-  color: var(--p-muted);
+  color: var(--p-accent);
   transition: transform 180ms var(--ease);
 }
 
@@ -171,9 +177,9 @@ onBeforeUnmount(() => {
   overflow-y: auto;
   padding: 6px;
   background: var(--p-card);
-  border: 1px solid var(--p-line-strong);
-  border-radius: var(--r-md);
-  box-shadow: 0 12px 32px rgba(24, 37, 43, 0.12);
+  border: 1px solid rgba(13, 116, 128, 0.24);
+  border-radius: 14px;
+  box-shadow: 0 14px 32px rgba(24, 37, 43, 0.12);
 }
 
 .platform-select__option {
@@ -184,12 +190,13 @@ onBeforeUnmount(() => {
   gap: 10px;
   padding: 8px 10px;
   border: none;
-  border-radius: var(--r-sm);
+  border-radius: 9px;
   background: transparent;
   color: var(--p-ink);
   font-size: 14px;
   cursor: pointer;
   text-align: left;
+  transition: background-color 120ms var(--ease);
 }
 
 .platform-select__option:hover {
