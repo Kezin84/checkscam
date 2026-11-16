@@ -261,9 +261,6 @@ function resolveBadgeStyle(label = '') {
     <!-- Official Bank Accounts -->
     <div v-if="bankList.length" class="shop-card__section">
       <span class="label">Tài khoản ngân hàng chính chủ</span>
-      <p class="shop-card__guardrail">
-        Chỉ chuyển khoản đúng số tài khoản chính chủ niêm yết bên dưới. Nếu người bán gửi số tài khoản khác dù trùng tên trang cá nhân, hãy dừng giao dịch ngay.
-      </p>
       <div class="rows">
         <div v-for="(bank, bIdx) in bankList" :key="bIdx" class="rows__item shop-card__row">
           <div class="shop-card__row-main">
@@ -291,6 +288,9 @@ function resolveBadgeStyle(label = '') {
           <CopyButton v-if="bank.accountNumber" :value="formatBankCopyValue(bank)" label="Chép STK" />
         </div>
       </div>
+      <p class="shop-card__guardrail">
+        Chỉ chuyển khoản đúng số tài khoản chính chủ niêm yết bên trên. Nếu người bán gửi số tài khoản khác dù trùng tên trang cá nhân, hãy dừng giao dịch ngay.
+      </p>
     </div>
 
     <!-- Official Social Links -->
