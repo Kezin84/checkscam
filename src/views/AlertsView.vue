@@ -59,17 +59,23 @@ const {
         </RouterLink>
       </div>
 
-      <div class="filter-bar card">
+      <div class="filter-bar">
         <div class="field">
           <label for="alert-filter-q" class="field__label">Tra cứu theo STK, SĐT, tên chủ thẻ hoặc link MXH</label>
-          <input
-            id="alert-filter-q"
-            v-model="keyword"
-            type="search"
-            class="field__input"
-            placeholder="Nhập số tài khoản, tên đối tượng, SĐT hoặc link..."
-            @keydown.enter.prevent="triggerSearchNow"
-          />
+          <div class="search-pill">
+            <svg class="search-pill__icon" viewBox="0 0 20 20" width="18" height="18" fill="none" aria-hidden="true">
+              <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.7" />
+              <path d="M13.5 13.5L17.5 17.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" />
+            </svg>
+            <input
+              id="alert-filter-q"
+              v-model="keyword"
+              type="search"
+              class="search-pill__input"
+              placeholder="Nhập số tài khoản, tên đối tượng, SĐT hoặc link..."
+              @keydown.enter.prevent="triggerSearchNow"
+            />
+          </div>
         </div>
 
         <div class="field">
@@ -147,6 +153,60 @@ const {
   grid-template-columns: 2fr 1fr;
   gap: var(--s-4);
   margin-bottom: var(--s-6);
+}
+
+.search-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(13, 116, 128, 0.34);
+  background: var(--p-card);
+  transition: border-color 140ms var(--ease), box-shadow 140ms var(--ease);
+}
+
+.search-pill:hover {
+  border-color: rgba(13, 116, 128, 0.58);
+}
+
+.search-pill:focus-within {
+  border-color: var(--p-accent);
+  box-shadow: 0 0 0 3px rgba(13, 116, 128, 0.12);
+}
+
+.search-pill__icon {
+  color: var(--p-accent);
+  flex-shrink: 0;
+}
+
+.search-pill__input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  color: var(--p-ink);
+}
+
+.search-pill__input::placeholder {
+  color: rgba(85, 100, 107, 0.72);
+}
+
+.search-pill__input:focus {
+  outline: none;
+}
+
+.filter-bar :deep(.platform-select__trigger) {
+  border-radius: 999px;
+  border: 1.5px solid rgba(13, 116, 128, 0.34);
+  padding: 0 18px;
+}
+
+.filter-bar :deep(.platform-select__trigger:hover) {
+  border-color: rgba(13, 116, 128, 0.58);
 }
 
 .cards-grid {
