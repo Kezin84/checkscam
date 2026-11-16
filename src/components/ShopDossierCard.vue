@@ -82,6 +82,26 @@ function formatBankCopyValue(b) {
   const holder = String(b.accountHolder || '').trim()
   return [stk, bankName, holder].filter(Boolean).join('\n')
 }
+
+function resolveBadgeStyle(label = '') {
+  const s = String(label).toLowerCase()
+  if (/(ngon|best|hot|chuẩn|đặc sản|chất lượng|thơm|sạch|nổi bật)/.test(s)) {
+    return { icon: 'star', tone: 'gold' }
+  }
+  if (/(nhanh|ship|giao|freeship|tận nơi|hỏa tốc|express)/.test(s)) {
+    return { icon: 'bolt', tone: 'fast' }
+  }
+  if (/(giá|rẻ|minh bạch|ưu đãi|giảm|combo|tặng)/.test(s)) {
+    return { icon: 'tag', tone: 'promo' }
+  }
+  if (/(24\/7|khuya|sớm|hỗ trợ|nhiệt tình|tư vấn|rep)/.test(s)) {
+    return { icon: 'clock', tone: 'sky' }
+  }
+  if (/(đóng gói|uy tín|trung gian|bảo|an toàn|chính chủ)/.test(s)) {
+    return { icon: 'shield', tone: 'trust' }
+  }
+  return { icon: 'check', tone: 'neutral' }
+}
 </script>
 
 <template>
@@ -131,8 +151,77 @@ function formatBankCopyValue(b) {
         <span v-if="shop.category" class="shop-card__category">{{ shop.category }}</span>
 
         <div v-if="badgeList.length" class="shop-card__tags">
-          <span v-for="(badge, bIdx) in badgeList" :key="badge + bIdx" class="shop-card__tag">
-            {{ badge }}
+          <span
+            v-for="(badge, bIdx) in badgeList"
+            :key="badge + bIdx"
+            class="shop-card__tag"
+            :class="`shop-card__tag--${resolveBadgeStyle(badge).tone}`"
+          >
+            <svg
+              v-if="resolveBadgeStyle(badge).icon === 'star'"
+              viewBox="0 0 16 16"
+              width="13"
+              height="13"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M8 1.3L10.05 5.45L14.63 6.12L11.31 9.35L12.1 13.91L8 11.76L3.9 13.91L4.69 9.35L1.37 6.12L5.95 5.45L8 1.3Z" />
+            </svg>
+            <svg
+              v-else-if="resolveBadgeStyle(badge).icon === 'bolt'"
+              viewBox="0 0 16 16"
+              width="13"
+              height="13"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M9.1 1.2L3.2 9.1H7.7L6.8 14.8L12.8 6.9H8.3L9.1 1.2Z" />
+            </svg>
+            <svg
+              v-else-if="resolveBadgeStyle(badge).icon === 'tag'"
+              viewBox="0 0 16 16"
+              width="13"
+              height="13"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path d="M8.6 2H3.2C2.54 2 2 2.54 2 3.2V8.6L8.2 14.8C8.67 15.27 9.43 15.27 9.9 14.8L14.8 9.9C15.27 9.43 15.27 8.67 14.8 8.2L8.6 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+              <circle cx="5.4" cy="5.4" r="1" fill="currentColor" />
+            </svg>
+            <svg
+              v-else-if="resolveBadgeStyle(badge).icon === 'clock'"
+              viewBox="0 0 16 16"
+              width="13"
+              height="13"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5" />
+              <path d="M8 4.8V8.2L10.3 9.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+            <svg
+              v-else-if="resolveBadgeStyle(badge).icon === 'shield'"
+              viewBox="0 0 16 16"
+              width="13"
+              height="13"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path d="M8 1.6L13.3 3.7V7.7C13.3 11 11 13.7 8 14.6C5 13.7 2.7 11 2.7 7.7V3.7L8 1.6Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+              <path d="M5.7 8.1L7.3 9.7L10.5 6.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <svg
+              v-else
+              viewBox="0 0 16 16"
+              width="13"
+              height="13"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5" />
+              <path d="M5.4 8.2L7.2 10L10.8 6.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>{{ badge }}</span>
           </span>
         </div>
 
@@ -365,20 +454,60 @@ function formatBankCopyValue(b) {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .shop-card__tag {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: var(--r-sm);
-  background: var(--p-surface);
-  border: 1px solid var(--p-line);
+  gap: 5px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
   font-size: 12px;
-  font-weight: 500;
-  color: var(--p-ink);
-  line-height: 1.4;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  border: 1px solid transparent;
+}
+
+.shop-card__tag svg {
+  flex-shrink: 0;
+}
+
+.shop-card__tag--gold {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #c2410c;
+}
+
+.shop-card__tag--fast {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.shop-card__tag--promo {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.shop-card__tag--sky {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.shop-card__tag--trust {
+  background: #f0fdfa;
+  border-color: #99f6e4;
+  color: #0f766e;
+}
+
+.shop-card__tag--neutral {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #334155;
 }
 
 .shop-card__owner,
