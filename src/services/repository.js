@@ -370,6 +370,48 @@ function sanitizeLinks(links = []) {
     .filter(Boolean)
 }
 
+function parseScamAmount(val) {
+  return Number(String(val || '').replace(/[^\d]/g, '')) || 0
+}
+
+function sanitizeIncidentItem(item = {}) {
+  return {
+    scamType: String(item?.scamType || '').trim(),
+    scamAmount: parseScamAmount(item?.scamAmount),
+    description: String(item?.description || '').trim(),
+    evidenceImages: sanitizeLinks(item?.evidenceImages),
+    exposeLinks: sanitizeLinks(item?.exposeLinks)
+  }
+}
+
+export function normalizeReportIncidents(report = {}) {
+  if (Array.isArray(report?.incidents) && report.incidents.length) {
+    const cleaned = report.incidents
+      .map(sanitizeIncidentItem)
+      .filter(
+        (inc) =>
+          inc.scamType ||
+          inc.scamAmount > 0 ||
+          inc.description ||
+          inc.evidenceImages.length > 0 ||
+          inc.exposeLinks.length > 0
+      )
+    if (cleaned.length) return cleaned
+  }
+
+  const fallback = sanitizeIncidentItem(report)
+  if (
+    fallback.scamType ||
+    fallback.scamAmount > 0 ||
+    fallback.description ||
+    fallback.evidenceImages.length > 0 ||
+    fallback.exposeLinks.length > 0
+  ) {
+    return [fallback]
+  }
+  return []
+}
+
 function sanitizeBadges(badges = []) {
   const seen = new Set()
   const out = []
@@ -394,15 +436,28 @@ export function prepareScamReportPayload(raw, existingCreatedAt = null) {
     bankAccounts[0]?.accountHolder ||
     'Chưa rõ tên hiển thị'
 
+  const incidents = normalizeReportIncidents(raw)
+  const primaryIncident = incidents[0] || sanitizeIncidentItem(raw)
+  const totalAmount = incidents.length
+    ? incidents.reduce((sum, inc) => sum + (inc.scamAmount || 0), 0)
+    : primaryIncident.scamAmount
+  const allEvidenceImages = incidents.length
+    ? incidents.flatMap((inc) => inc.evidenceImages)
+    : primaryIncident.evidenceImages
+  const allExposeLinks = incidents.length
+    ? Array.from(new Set(incidents.flatMap((inc) => inc.exposeLinks)))
+    : primaryIncident.exposeLinks
+
   const base = {
     subjectName,
-    scamType: String(raw.scamType || '').trim(),
-    scamAmount: Number(String(raw.scamAmount || '').replace(/[^\d]/g, '')) || 0,
-    description: String(raw.description || '').trim(),
+    scamType: primaryIncident.scamType,
+    scamAmount: totalAmount,
+    description: primaryIncident.description,
+    incidents,
     bankAccounts,
     socials,
-    evidenceImages: sanitizeLinks(raw.evidenceImages),
-    exposeLinks: sanitizeLinks(raw.exposeLinks),
+    evidenceImages: allEvidenceImages,
+    exposeLinks: allExposeLinks,
     createdAt: existingCreatedAt || Date.now(),
     updatedAt: Date.now()
   }

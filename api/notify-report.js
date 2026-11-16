@@ -42,19 +42,29 @@ function resolveAdminUrl(req) {
 function formatTelegramMessage({ reportId, report, adminUrl }) {
   const lines = ['🚨 <b>ĐƠN TỐ CÁO MỚI CHỜ DUYỆT</b>']
 
+  const incidents = Array.isArray(report.incidents) && report.incidents.length > 0 ? report.incidents : null
+
   if (reportId) {
     lines.push(`🆔 <b>Mã đơn:</b> <code>${escapeHtml(reportId)}</code>`)
   }
   if (report.subjectName) {
     lines.push(`👤 <b>Đối tượng:</b> ${escapeHtml(report.subjectName)}`)
   }
-  if (report.scamType) {
-    lines.push(`⚠️ <b>Hình thức:</b> ${escapeHtml(report.scamType)}`)
-  }
+  if (incidents && incidents.length > 1) {
+    lines.push(`📚 <b>Số vụ việc:</b> ${incidents.length} cụm vụ việc`)
+    const totalAmountText = formatAmountVi(report.scamAmount)
+    if (totalAmountText) {
+      lines.push(`💸 <b>Tổng thiệt hại:</b> ${escapeHtml(totalAmountText)}`)
+    }
+  } else {
+    if (report.scamType) {
+      lines.push(`⚠️ <b>Hình thức:</b> ${escapeHtml(report.scamType)}`)
+    }
 
-  const amountText = formatAmountVi(report.scamAmount)
-  if (amountText) {
-    lines.push(`💸 <b>Số tiền:</b> ${escapeHtml(amountText)}`)
+    const amountText = formatAmountVi(report.scamAmount)
+    if (amountText) {
+      lines.push(`💸 <b>Số tiền:</b> ${escapeHtml(amountText)}`)
+    }
   }
 
   const banks = Array.isArray(report.bankAccounts) ? report.bankAccounts : []
@@ -81,7 +91,18 @@ function formatTelegramMessage({ reportId, report, adminUrl }) {
     }
   }
 
-  if (report.description) {
+  if (incidents && incidents.length > 1) {
+    lines.push('')
+    lines.push('📌 <b>Chi tiết các vụ việc:</b>')
+    incidents.slice(0, 5).forEach((inc, idx) => {
+      const amt = formatAmountVi(inc.scamAmount)
+      const head = [inc.scamType, amt].filter(Boolean).join(' · ')
+      lines.push(`• <b>Vụ #${idx + 1}:</b> ${escapeHtml(head || 'Chưa rõ hình thức')}`)
+      if (inc.description) {
+        lines.push(`  <i>${escapeHtml(truncateText(inc.description, 220))}</i>`)
+      }
+    })
+  } else if (report.description) {
     lines.push('')
     lines.push(`📝 <b>Nội dung:</b> ${escapeHtml(truncateText(report.description, 600))}`)
   }

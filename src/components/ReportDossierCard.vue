@@ -4,6 +4,7 @@ import CopyButton from './CopyButton.vue'
 import LightboxModal from './LightboxModal.vue'
 import SocialChannelList from './SocialChannelList.vue'
 import { useBanks } from '@/services/banks'
+import { normalizeReportIncidents } from '@/services/repository'
 import { optimizeCloudinaryUrl } from '@/services/cloudinary'
 import {
   formatDateVi,
@@ -22,6 +23,7 @@ const props = defineProps({
 })
 
 const { findBank } = useBanks()
+const lightboxImages = ref([])
 const lightboxIdx = ref(-1)
 
 const bankList = computed(() => {
@@ -32,13 +34,19 @@ const socialList = computed(() => {
   return Array.isArray(props.report.socials) ? props.report.socials : []
 })
 
-const evidenceList = computed(() => {
-  return Array.isArray(props.report.evidenceImages) ? props.report.evidenceImages : []
+const incidentList = computed(() => {
+  return normalizeReportIncidents(props.report)
 })
 
-const exposeList = computed(() => {
-  return Array.isArray(props.report.exposeLinks) ? props.report.exposeLinks : []
+const totalScamAmount = computed(() => {
+  const sum = incidentList.value.reduce((acc, inc) => acc + (inc.scamAmount || 0), 0)
+  return sum || Number(props.report.scamAmount || 0)
 })
+
+function openIncidentLightbox(images, idx) {
+  lightboxImages.value = Array.isArray(images) ? images : []
+  lightboxIdx.value = idx
+}
 
 function resolveBankLogo(b) {
   if (b.bankLogo) return b.bankLogo
@@ -87,10 +95,10 @@ function matchBadgeLabel(type) {
 
     <div class="dossier__title-block">
       <h3 class="dossier__name">{{ report.subjectName }}</h3>
-      <div class="dossier__scam-meta">
-        <span v-if="report.scamType" class="dossier__method">{{ report.scamType }}</span>
-        <span v-if="report.scamAmount > 0" class="mono dossier__amount">
-          Thiệt hại ghi nhận: {{ formatCurrencyVi(report.scamAmount) }}
+      <div v-if="incidentList.length > 1" class="dossier__scam-meta">
+        <span class="dossier__method">{{ incidentList.length }} vụ việc ghi nhận</span>
+        <span v-if="totalScamAmount > 0" class="mono dossier__amount">
+          Tổng thiệt hại: {{ formatCurrencyVi(totalScamAmount) }}
         </span>
       </div>
     </div>
@@ -133,54 +141,75 @@ function matchBadgeLabel(type) {
       <SocialChannelList :socials="socialList" />
     </div>
 
-    <!-- Description -->
-    <p v-if="report.description" class="dossier__desc">
-      {{ report.description }}
-    </p>
+    <!-- Incident clusters -->
+    <div v-if="incidentList.length" class="dossier__incidents">
+      <section
+        v-for="(inc, cIdx) in incidentList"
+        :key="cIdx"
+        class="dossier__incident"
+      >
+        <div class="dossier__incident-head">
+          <div class="dossier__scam-meta">
+            <span v-if="incidentList.length > 1" class="stamp stamp--danger">
+              Vụ việc #{{ cIdx + 1 }}
+            </span>
+            <span v-if="inc.scamType" class="dossier__method">{{ inc.scamType }}</span>
+          </div>
+          <span v-if="inc.scamAmount > 0" class="mono dossier__amount">
+            Thiệt hại: {{ formatCurrencyVi(inc.scamAmount) }}
+          </span>
+        </div>
 
-    <!-- Evidence photos (House rule 1: no captions under images) -->
-    <div v-if="evidenceList.length" class="dossier__section">
-      <span class="label">Bằng chứng hình ảnh ({{ evidenceList.length }})</span>
-      <div class="dossier__gallery">
-        <button
-          v-for="(img, idx) in evidenceList"
-          :key="img + idx"
-          type="button"
-          class="m-zoom dossier__evidence-btn"
-          :aria-label="`Phóng to ảnh bằng chứng ${idx + 1}`"
-          @click="lightboxIdx = idx"
-        >
-          <img
-            :src="optimizeCloudinaryUrl(img, 420)"
-            :alt="`Ảnh chụp bằng chứng giao dịch ${idx + 1}`"
-            loading="lazy"
-          />
-        </button>
-      </div>
-    </div>
+        <!-- Description -->
+        <p v-if="inc.description" class="dossier__desc">
+          {{ inc.description }}
+        </p>
 
-    <!-- Expose post links -->
-    <div v-if="exposeList.length" class="dossier__expose">
-      <span class="label">Bài viết bóc phốt đối chiếu:</span>
-      <div class="dossier__expose-links">
-        <a
-          v-for="(url, lIdx) in exposeList"
-          :key="url + lIdx"
-          :href="url"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="link"
-        >
-          <span>Bài đăng cảnh báo {{ exposeList.length > 1 ? lIdx + 1 : '' }}</span>
-          <svg viewBox="0 0 14 14" width="12" height="12" fill="none" aria-hidden="true">
-            <path d="M4 10L10 4M10 4H5.2M10 4V8.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
-          </svg>
-        </a>
-      </div>
+        <!-- Evidence photos (House rule 1: no captions under images) -->
+        <div v-if="inc.evidenceImages.length" class="dossier__section">
+          <span class="label">Bằng chứng hình ảnh ({{ inc.evidenceImages.length }})</span>
+          <div class="dossier__gallery">
+            <button
+              v-for="(img, idx) in inc.evidenceImages"
+              :key="img + idx"
+              type="button"
+              class="m-zoom dossier__evidence-btn"
+              :aria-label="`Phóng to ảnh bằng chứng ${idx + 1}`"
+              @click="openIncidentLightbox(inc.evidenceImages, idx)"
+            >
+              <img
+                :src="optimizeCloudinaryUrl(img, 420)"
+                :alt="`Ảnh chụp bằng chứng giao dịch ${idx + 1}`"
+                loading="lazy"
+              />
+            </button>
+          </div>
+        </div>
+
+        <!-- Expose post links -->
+        <div v-if="inc.exposeLinks.length" class="dossier__expose">
+          <span class="label">Bài viết bóc phốt đối chiếu:</span>
+          <div class="dossier__expose-links">
+            <a
+              v-for="(url, lIdx) in inc.exposeLinks"
+              :key="url + lIdx"
+              :href="url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="link"
+            >
+              <span>Bài đăng cảnh báo {{ inc.exposeLinks.length > 1 ? lIdx + 1 : '' }}</span>
+              <svg viewBox="0 0 14 14" width="12" height="12" fill="none" aria-hidden="true">
+                <path d="M4 10L10 4M10 4H5.2M10 4V8.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </section>
     </div>
 
     <LightboxModal
-      :images="evidenceList"
+      :images="lightboxImages"
       :active-index="lightboxIdx"
       @close="lightboxIdx = -1"
       @change="(i) => (lightboxIdx = i)"
@@ -356,5 +385,29 @@ function matchBadgeLabel(type) {
   flex-wrap: wrap;
   gap: 16px;
   font-size: var(--t-small);
+}
+
+.dossier__incidents {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.dossier__incident {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--p-line);
+  background: var(--p-surface);
+}
+
+.dossier__incident-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 14px;
 }
 </style>

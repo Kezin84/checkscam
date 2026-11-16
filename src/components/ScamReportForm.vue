@@ -1,9 +1,10 @@
 <script setup>
-import { reactive, ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { computed, reactive, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import BankSelect from './BankSelect.vue'
 import PlatformSelect from './PlatformSelect.vue'
 import EvidenceUploader from './EvidenceUploader.vue'
 import PlatformIcon from './icons/PlatformIcon.vue'
+import { normalizeReportIncidents } from '@/services/repository'
 import {
   SCAM_TYPES,
   detectPlatformFromInput,
@@ -51,12 +52,37 @@ function emptyBank() {
   }
 }
 
+let nextIncidentUid = 1
+
+function emptyIncident(overrides = {}) {
+  return {
+    _uid: nextIncidentUid++,
+    scamType: '',
+    scamAmount: '',
+    description: '',
+    evidenceImages: [],
+    exposeLinks: [''],
+    ...overrides
+  }
+}
+
 function createInitialState(src) {
+  const normalizedIncidents = src ? normalizeReportIncidents(src) : []
+  const incidents = normalizedIncidents.length
+    ? normalizedIncidents.map((inc) =>
+        emptyIncident({
+          scamType: inc.scamType || '',
+          scamAmount: inc.scamAmount ? String(inc.scamAmount) : '',
+          description: inc.description || '',
+          evidenceImages: Array.isArray(inc.evidenceImages) ? [...inc.evidenceImages] : [],
+          exposeLinks:
+            Array.isArray(inc.exposeLinks) && inc.exposeLinks.length ? [...inc.exposeLinks] : ['']
+        })
+      )
+    : [emptyIncident()]
+
   return {
     subjectName: src?.subjectName || '',
-    scamType: src?.scamType || '',
-    scamAmount: src?.scamAmount ? String(src.scamAmount) : '',
-    description: src?.description || '',
     socials:
       Array.isArray(src?.socials) && src.socials.length
         ? src.socials.map((s) => ({ ...emptySocial(), ...s }))
@@ -65,9 +91,7 @@ function createInitialState(src) {
       Array.isArray(src?.bankAccounts) && src.bankAccounts.length
         ? src.bankAccounts.map((b) => ({ ...emptyBank(), ...b }))
         : [emptyBank()],
-    evidenceImages: Array.isArray(src?.evidenceImages) ? [...src.evidenceImages] : [],
-    exposeLinks:
-      Array.isArray(src?.exposeLinks) && src.exposeLinks.length ? [...src.exposeLinks] : [''],
+    incidents,
     reporterName: src?.reporterName || '',
     reporterContact: src?.reporterContact || '',
     createdAt: src?.createdAt || null
@@ -75,19 +99,42 @@ function createInitialState(src) {
 }
 
 const form = reactive(createInitialState(props.initialData))
-const isUploading = ref(false)
+const uploadingMap = reactive({})
+const isUploading = computed(() => Object.values(uploadingMap).some(Boolean))
 const scamModalOpen = ref(false)
+const scamModalTargetIdx = ref(0)
 const errors = reactive({
   subjectName: '',
   identifier: '',
-  scamType: '',
-  evidence: ''
+  incidents: []
 })
 
+function openScamModal(idx) {
+  scamModalTargetIdx.value = idx
+  scamModalOpen.value = true
+}
+
 function pickScamType(st) {
-  form.scamType = st
-  errors.scamType = ''
+  const targetIdx = scamModalTargetIdx.value
+  if (form.incidents[targetIdx]) {
+    form.incidents[targetIdx].scamType = st
+  }
+  if (errors.incidents[targetIdx]) {
+    errors.incidents[targetIdx].scamType = ''
+  }
   scamModalOpen.value = false
+}
+
+function setClusterUploading(uid, state) {
+  if (state) {
+    uploadingMap[uid] = true
+  } else {
+    delete uploadingMap[uid]
+  }
+}
+
+function getIncidentError(idx, field) {
+  return errors.incidents[idx]?.[field] || ''
 }
 
 function onModalKeydown(e) {
@@ -149,20 +196,30 @@ function removeBankRow(idx) {
   if (form.bankAccounts.length > 1) form.bankAccounts.splice(idx, 1)
 }
 
-function addExposeLink() {
-  form.exposeLinks.push('')
+function addIncidentRow() {
+  form.incidents.push(emptyIncident())
 }
 
-function removeExposeLink(idx) {
-  if (form.exposeLinks.length > 1) form.exposeLinks.splice(idx, 1)
-  else form.exposeLinks[0] = ''
+function removeIncidentRow(idx) {
+  if (form.incidents.length <= 1) return
+  const [removed] = form.incidents.splice(idx, 1)
+  if (removed?._uid) delete uploadingMap[removed._uid]
+  if (errors.incidents.length > idx) errors.incidents.splice(idx, 1)
+}
+
+function addExposeLink(inc) {
+  inc.exposeLinks.push('')
+}
+
+function removeExposeLink(inc, idx) {
+  if (inc.exposeLinks.length > 1) inc.exposeLinks.splice(idx, 1)
+  else inc.exposeLinks[0] = ''
 }
 
 function validate() {
   errors.subjectName = ''
   errors.identifier = ''
-  errors.scamType = ''
-  errors.evidence = ''
+  errors.incidents = form.incidents.map(() => ({ scamType: '', evidence: '' }))
 
   if (!form.subjectName.trim()) {
     errors.subjectName = 'Nhập tên tài khoản mạng xã hội hoặc tên đối tượng bị tố cáo.'
@@ -175,15 +232,20 @@ function validate() {
       'Cần nhập ít nhất một Số tài khoản ngân hàng hoặc một Username / SĐT / Link MXH để người khác tra cứu được.'
   }
 
-  if (!form.scamType.trim()) {
-    errors.scamType = 'Nhập trực tiếp hoặc bấm Chọn để điền hình thức lừa đảo.'
-  }
+  let hasIncidentError = false
+  form.incidents.forEach((inc, idx) => {
+    if (!inc.scamType.trim()) {
+      errors.incidents[idx].scamType = 'Nhập trực tiếp hoặc bấm Chọn để điền hình thức lừa đảo.'
+      hasIncidentError = true
+    }
+    if (props.mode === 'public' && inc.evidenceImages.length === 0) {
+      errors.incidents[idx].evidence =
+        'Tải lên ít nhất 1 ảnh chụp màn hình bằng chứng (tin nhắn hoặc biên lai chuyển khoản).'
+      hasIncidentError = true
+    }
+  })
 
-  if (props.mode === 'public' && form.evidenceImages.length === 0) {
-    errors.evidence = 'Tải lên ít nhất 1 ảnh chụp màn hình bằng chứng (tin nhắn hoặc biên lai chuyển khoản).'
-  }
-
-  return !errors.subjectName && !errors.identifier && !errors.scamType && !errors.evidence
+  return !errors.subjectName && !errors.identifier && !hasIncidentError
 }
 
 function handleSubmit() {
@@ -196,15 +258,30 @@ function handleSubmit() {
     accountName: s.accountName.trim() || (idx === 0 ? form.subjectName.trim() : '')
   }))
 
+  const incidentsPayload = form.incidents.map((inc) => ({
+    scamType: inc.scamType.trim(),
+    scamAmount: inc.scamAmount,
+    description: inc.description.trim(),
+    evidenceImages: [...inc.evidenceImages],
+    exposeLinks: [...inc.exposeLinks]
+  }))
+
+  const primaryIncident = incidentsPayload[0] || {}
+  const totalAmount = incidentsPayload.reduce(
+    (sum, inc) => sum + (Number(String(inc.scamAmount || '').replace(/[^\d]/g, '')) || 0),
+    0
+  )
+
   emit('submit', {
     subjectName: form.subjectName.trim(),
-    scamType: form.scamType.trim(),
-    scamAmount: form.scamAmount,
-    description: form.description.trim(),
+    scamType: primaryIncident.scamType || '',
+    scamAmount: totalAmount || '',
+    description: primaryIncident.description || '',
+    incidents: incidentsPayload,
     socials: socialsPayload,
     bankAccounts: form.bankAccounts,
-    evidenceImages: form.evidenceImages,
-    exposeLinks: form.exposeLinks,
+    evidenceImages: incidentsPayload.flatMap((inc) => inc.evidenceImages),
+    exposeLinks: incidentsPayload.flatMap((inc) => inc.exposeLinks),
     reporterName: form.reporterName.trim(),
     reporterContact: form.reporterContact.trim(),
     createdAt: form.createdAt
@@ -357,105 +434,139 @@ function handleSubmit() {
       </div>
     </div>
 
-    <!-- Block 3: Scam Details, Evidence & Expose Post -->
+    <!-- Block 3: Scam Details, Evidence & Expose Post (repeatable incident clusters) -->
     <div class="form-group-box">
       <div class="form-group-box__head">
         <h3>3. Hình thức lừa đảo & Bằng chứng</h3>
-        <p class="muted">Cung cấp rõ phương thức thực hiện, ảnh chụp biên lai/tin nhắn và bài đăng bóc phốt.</p>
+        <p class="muted">
+          Mỗi vụ việc gồm hình thức, số tiền, tóm tắt sự việc, ảnh bằng chứng và link bài phốt. Có thể thêm nhiều cụm vụ việc khác nhau của cùng đối tượng.
+        </p>
       </div>
 
-      <div class="repeat-grid-2">
-        <div class="field">
-          <label for="rf-scam-type" class="field__label">Hình thức lừa đảo *</label>
-          <div class="scam-type-control">
-            <input
-              id="rf-scam-type"
-              v-model="form.scamType"
-              type="text"
-              class="field__input scam-type-control__input"
-              placeholder="Nhập tay hoặc bấm Chọn..."
-              :aria-invalid="errors.scamType ? 'true' : undefined"
-            />
+      <div class="incident-cluster-list">
+        <div
+          v-for="(inc, idx) in form.incidents"
+          :key="inc._uid"
+          class="incident-cluster"
+        >
+          <div class="repeat-item__bar">
+            <span class="repeat-item__title">
+              <span class="stamp stamp--danger">Cụm vụ việc #{{ idx + 1 }}</span>
+            </span>
             <button
+              v-if="form.incidents.length > 1"
               type="button"
-              class="btn btn--secondary scam-type-control__btn"
-              @click="scamModalOpen = true"
+              class="text-remove-btn"
+              @click="removeIncidentRow(idx)"
             >
-              Chọn
+              Xóa cụm
             </button>
           </div>
-          <p v-if="errors.scamType" class="field__error">{{ errors.scamType }}</p>
-        </div>
 
-        <div class="field">
-          <label for="rf-scam-amount" class="field__label">
-            <span>Số tiền chiếm đoạt (VNĐ)</span>
-            <span class="field__hint">Không bắt buộc</span>
-          </label>
-          <input
-            id="rf-scam-amount"
-            v-model="form.scamAmount"
-            type="text"
-            inputmode="numeric"
-            class="field__input mono"
-            placeholder="Ví dụ: 500000"
-          />
-        </div>
-      </div>
+          <div class="repeat-grid-2">
+            <div class="field">
+              <label :for="`rf-scam-type-${idx}`" class="field__label">Hình thức lừa đảo *</label>
+              <div class="scam-type-control">
+                <input
+                  :id="`rf-scam-type-${idx}`"
+                  v-model="inc.scamType"
+                  type="text"
+                  class="field__input scam-type-control__input"
+                  placeholder="Nhập tay hoặc bấm Chọn..."
+                  :aria-invalid="getIncidentError(idx, 'scamType') ? 'true' : undefined"
+                />
+                <button
+                  type="button"
+                  class="btn btn--secondary scam-type-control__btn"
+                  @click="openScamModal(idx)"
+                >
+                  Chọn
+                </button>
+              </div>
+              <p v-if="getIncidentError(idx, 'scamType')" class="field__error">
+                {{ getIncidentError(idx, 'scamType') }}
+              </p>
+            </div>
 
-      <div class="field">
-        <label for="rf-desc" class="field__label">
-          <span>Tóm tắt sự việc</span>
-          <span class="field__hint">Giúp người tra cứu hiểu rõ thủ đoạn</span>
-        </label>
-        <textarea
-          id="rf-desc"
-          v-model="form.description"
-          class="field__textarea"
-          placeholder="Mô tả ngắn gọn diễn biến giao dịch, thời điểm chuyển khoản và cách đối tượng chặn liên lạc..."
-        ></textarea>
-      </div>
+            <div class="field">
+              <label :for="`rf-scam-amount-${idx}`" class="field__label">
+                <span>Số tiền chiếm đoạt (VNĐ)</span>
+                <span class="field__hint">Không bắt buộc</span>
+              </label>
+              <input
+                :id="`rf-scam-amount-${idx}`"
+                v-model="inc.scamAmount"
+                type="text"
+                inputmode="numeric"
+                class="field__input mono"
+                placeholder="Ví dụ: 500000"
+              />
+            </div>
+          </div>
 
-      <div class="field">
-        <span class="field__label">
-          <span>Bằng chứng hình ảnh {{ mode === 'public' ? '*' : '' }}</span>
-        </span>
-        <EvidenceUploader
-          v-model="form.evidenceImages"
-          @uploading="(state) => (isUploading = state)"
-        />
-        <p v-if="errors.evidence" class="field__error">{{ errors.evidence }}</p>
-      </div>
+          <div class="field">
+            <label :for="`rf-desc-${idx}`" class="field__label">
+              <span>Tóm tắt sự việc</span>
+              <span class="field__hint">Giúp người tra cứu hiểu rõ thủ đoạn</span>
+            </label>
+            <textarea
+              :id="`rf-desc-${idx}`"
+              v-model="inc.description"
+              class="field__textarea"
+              placeholder="Mô tả ngắn gọn diễn biến giao dịch, thời điểm chuyển khoản và cách đối tượng chặn liên lạc..."
+            ></textarea>
+          </div>
 
-      <div class="field">
-        <span class="field__label">
-          <span>Link bài viết bóc phốt</span>
-          <span class="field__hint">Facebook Group, TikTok, Threads...</span>
-        </span>
-        <div class="expose-inputs">
-          <div v-for="(_, lIdx) in form.exposeLinks" :key="lIdx" class="expose-inputs__row">
-            <input
-              v-model="form.exposeLinks[lIdx]"
-              type="url"
-              class="field__input"
-              :aria-label="`Link bài viết bóc phốt ${lIdx + 1}`"
-              placeholder="https://facebook.com/groups/..."
+          <div class="field">
+            <span class="field__label">
+              <span>Bằng chứng hình ảnh {{ mode === 'public' ? '*' : '' }}</span>
+            </span>
+            <EvidenceUploader
+              v-model="inc.evidenceImages"
+              @uploading="(state) => setClusterUploading(inc._uid, state)"
             />
-            <button
-              v-if="form.exposeLinks.length > 1 || form.exposeLinks[0]"
-              type="button"
-              class="btn btn--secondary btn--sm"
-              @click="removeExposeLink(lIdx)"
-            >
-              Xóa
-            </button>
+            <p v-if="getIncidentError(idx, 'evidence')" class="field__error">
+              {{ getIncidentError(idx, 'evidence') }}
+            </p>
+          </div>
+
+          <div class="field">
+            <span class="field__label">
+              <span>Link bài viết bóc phốt</span>
+              <span class="field__hint">Facebook Group, TikTok, Threads...</span>
+            </span>
+            <div class="expose-inputs">
+              <div v-for="(_, lIdx) in inc.exposeLinks" :key="lIdx" class="expose-inputs__row">
+                <input
+                  v-model="inc.exposeLinks[lIdx]"
+                  type="url"
+                  class="field__input"
+                  :aria-label="`Link bài viết bóc phốt ${lIdx + 1} của cụm ${idx + 1}`"
+                  placeholder="https://facebook.com/groups/..."
+                />
+                <button
+                  v-if="inc.exposeLinks.length > 1 || inc.exposeLinks[0]"
+                  type="button"
+                  class="btn btn--secondary btn--sm"
+                  @click="removeExposeLink(inc, lIdx)"
+                >
+                  Xóa
+                </button>
+              </div>
+            </div>
+            <div>
+              <button type="button" class="btn btn--secondary btn--sm" @click="addExposeLink(inc)">
+                + Thêm link bài phốt
+              </button>
+            </div>
           </div>
         </div>
-        <div>
-          <button type="button" class="btn btn--secondary btn--sm" @click="addExposeLink">
-            + Thêm link bài phốt
-          </button>
-        </div>
+      </div>
+
+      <div>
+        <button type="button" class="btn btn--secondary btn--sm" @click="addIncidentRow">
+          + Thêm cụm vụ việc / bằng chứng khác
+        </button>
       </div>
     </div>
 
@@ -549,12 +660,12 @@ function handleSubmit() {
               :key="st"
               type="button"
               class="scam-modal__option"
-              :class="{ 'is-selected': form.scamType === st }"
+              :class="{ 'is-selected': form.incidents[scamModalTargetIdx]?.scamType === st }"
               @click="pickScamType(st)"
             >
               <span>{{ st }}</span>
               <svg
-                v-if="form.scamType === st"
+                v-if="form.incidents[scamModalTargetIdx]?.scamType === st"
                 viewBox="0 0 16 16"
                 width="16"
                 height="16"
@@ -655,6 +766,22 @@ function handleSubmit() {
 .repeat-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-4);
+}
+
+.incident-cluster-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.incident-cluster {
+  padding: var(--s-4);
+  border: 1px solid var(--p-line);
+  border-radius: var(--r-md);
+  background: var(--p-surface);
+  display: flex;
+  flex-direction: column;
   gap: var(--s-4);
 }
 

@@ -13,7 +13,8 @@ import {
   saveApprovedReport,
   deleteApprovedReport,
   saveTrustedShop,
-  deleteTrustedShop
+  deleteTrustedShop,
+  normalizeReportIncidents
 } from '@/services/repository'
 import {
   formatDateVi,
@@ -489,10 +490,10 @@ const securityRulesJson = `{
 
                 <div class="pending-card__body">
                   <h3>{{ item.subjectName }}</h3>
-                  <p class="pending-card__scam">
-                    <strong>Hình thức:</strong> {{ item.scamType }}
+                  <p v-if="normalizeReportIncidents(item).length > 1" class="pending-card__scam">
+                    <strong>Tổng hợp:</strong> {{ normalizeReportIncidents(item).length }} cụm vụ việc
                     <span v-if="item.scamAmount > 0" class="mono">
-                      · Số tiền: {{ formatCurrencyVi(item.scamAmount) }}
+                      · Tổng thiệt hại: {{ formatCurrencyVi(item.scamAmount) }}
                     </span>
                   </p>
 
@@ -536,33 +537,54 @@ const securityRulesJson = `{
                     </div>
                   </div>
 
-                  <p v-if="item.description" class="pending-card__desc">{{ item.description }}</p>
-
-                  <div v-if="item.evidenceImages?.length" class="pending-card__photos">
-                    <button
-                      v-for="(img, idx) in item.evidenceImages"
-                      :key="img + idx"
-                      type="button"
-                      class="m-zoom pending-card__thumb"
-                      :aria-label="`Xem ảnh bằng chứng ${idx + 1}`"
-                      @click="openPreview(item.evidenceImages, idx)"
+                  <div
+                    v-if="normalizeReportIncidents(item).length"
+                    class="pending-card__incidents"
+                  >
+                    <div
+                      v-for="(inc, cIdx) in normalizeReportIncidents(item)"
+                      :key="cIdx"
+                      class="pending-card__incident"
                     >
-                      <img :src="optimizeCloudinaryUrl(img, 320)" :alt="`Ảnh bằng chứng ${idx + 1}`" />
-                    </button>
-                  </div>
+                      <p class="pending-card__scam">
+                        <strong v-if="normalizeReportIncidents(item).length > 1">
+                          Vụ việc #{{ cIdx + 1 }} ·
+                        </strong>
+                        <strong>Hình thức:</strong> {{ inc.scamType || '—' }}
+                        <span v-if="inc.scamAmount > 0" class="mono">
+                          · Số tiền: {{ formatCurrencyVi(inc.scamAmount) }}
+                        </span>
+                      </p>
 
-                  <div v-if="item.exposeLinks?.length" class="pending-card__links">
-                    <span class="label">Link bài phốt:</span>
-                    <a
-                      v-for="(lnk, li) in item.exposeLinks"
-                      :key="li"
-                      :href="lnk"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="link"
-                    >
-                      Bài phốt #{{ li + 1 }}
-                    </a>
+                      <p v-if="inc.description" class="pending-card__desc">{{ inc.description }}</p>
+
+                      <div v-if="inc.evidenceImages?.length" class="pending-card__photos">
+                        <button
+                          v-for="(img, idx) in inc.evidenceImages"
+                          :key="img + idx"
+                          type="button"
+                          class="m-zoom pending-card__thumb"
+                          :aria-label="`Xem ảnh bằng chứng ${idx + 1}`"
+                          @click="openPreview(inc.evidenceImages, idx)"
+                        >
+                          <img :src="optimizeCloudinaryUrl(img, 320)" :alt="`Ảnh bằng chứng ${idx + 1}`" />
+                        </button>
+                      </div>
+
+                      <div v-if="inc.exposeLinks?.length" class="pending-card__links">
+                        <span class="label">Link bài phốt:</span>
+                        <a
+                          v-for="(lnk, li) in inc.exposeLinks"
+                          :key="li"
+                          :href="lnk"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="link"
+                        >
+                          Bài phốt #{{ li + 1 }}
+                        </a>
+                      </div>
+                    </div>
                   </div>
 
                   <div class="pending-card__reporter">
@@ -993,6 +1015,22 @@ const securityRulesJson = `{
   align-items: center;
   gap: 12px;
   font-size: var(--t-small);
+}
+
+.pending-card__incidents {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.pending-card__incident {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  border: 1px solid var(--p-line);
+  border-radius: var(--r-md);
+  background: var(--p-surface);
 }
 
 .pending-card__reporter {
