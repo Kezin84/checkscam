@@ -165,6 +165,7 @@ export function buildSearchPayload(record) {
   if (record.subjectName) textParts.push(record.subjectName)
   if (record.shopName) textParts.push(record.shopName)
   if (record.ownerName) textParts.push(record.ownerName)
+  if (record.address) textParts.push(record.address)
   if (record.category) textParts.push(record.category)
 
   const banks = Array.isArray(record.bankAccounts) ? record.bankAccounts : []
@@ -221,6 +222,7 @@ export function buildIndexTokens(record = {}) {
   addWordsAndCompact(record.subjectName)
   addWordsAndCompact(record.shopName)
   addWordsAndCompact(record.ownerName)
+  addWordsAndCompact(record.address)
   addWordsAndCompact(record.category)
 
   const banks = Array.isArray(record.bankAccounts) ? record.bankAccounts : []

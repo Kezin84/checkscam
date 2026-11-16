@@ -408,6 +408,7 @@ export function prepareTrustedShopPayload(raw, existingCreatedAt = null) {
   const base = {
     shopName,
     ownerName: String(raw.ownerName || '').trim(),
+    address: String(raw.address || '').trim(),
     avatar: String(raw.avatar || '').trim(),
     category,
     categoryKey: toSafeIndexKey(category),
@@ -429,6 +430,23 @@ export function prepareTrustedShopPayload(raw, existingCreatedAt = null) {
   }
 }
 
+async function notifyTelegramPendingReport(reportId, report) {
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 4000)
+    await fetch('/api/notify-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reportId, report }),
+      keepalive: true,
+      signal: controller.signal
+    })
+    clearTimeout(timer)
+  } catch {
+    // Non-blocking: report is already safely persisted in Firebase RTDB
+  }
+}
+
 // Public submission -> goes into pending_reports (hidden from public listing & lookup_index until approved)
 export async function submitUserPendingReport(raw) {
   const payload = prepareScamReportPayload(raw)
@@ -439,6 +457,7 @@ export async function submitUserPendingReport(raw) {
   }
   const newNode = push(dbRef(db, 'pending_reports'))
   await set(newNode, pendingPayload)
+  await notifyTelegramPendingReport(newNode.key, pendingPayload)
   return newNode.key
 }
 

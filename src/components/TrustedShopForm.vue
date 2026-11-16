@@ -49,6 +49,7 @@ function createInitialState(src) {
   return {
     shopName: src?.shopName || '',
     ownerName: src?.ownerName || '',
+    address: src?.address || '',
     category: src?.category || '',
     description: src?.description || '',
     avatarList: src?.avatar ? [src.avatar] : [],
@@ -163,6 +164,7 @@ function handleSubmit() {
   emit('submit', {
     shopName: form.shopName.trim(),
     ownerName: form.ownerName.trim(),
+    address: form.address.trim(),
     category: form.category.trim(),
     description: form.description.trim(),
     avatar: form.avatarList[0] || '',
@@ -205,6 +207,17 @@ function handleSubmit() {
             placeholder="Ví dụ: Trần Văn Kiên"
           />
         </div>
+      </div>
+
+      <div class="field">
+        <label for="sf-address" class="field__label">Địa chỉ shop</label>
+        <input
+          id="sf-address"
+          v-model="form.address"
+          type="text"
+          class="field__input"
+          placeholder="Ví dụ: Makati / Pasay, Metro Manila, Philippines"
+        />
       </div>
 
       <div class="shop-form__grid-2">

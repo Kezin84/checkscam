@@ -91,6 +91,9 @@ function formatBankCopyValue(b) {
         <p v-if="shop.ownerName" class="shop-card__owner">
           Chủ sở hữu: <strong>{{ shop.ownerName }}</strong>
         </p>
+        <p v-if="shop.address" class="shop-card__address">
+          Địa chỉ: <strong>{{ shop.address }}</strong>
+        </p>
       </div>
     </div>
 
@@ -251,12 +254,14 @@ function formatBankCopyValue(b) {
   color: var(--p-ink);
 }
 
-.shop-card__owner {
+.shop-card__owner,
+.shop-card__address {
   font-size: var(--t-small);
   color: var(--p-muted);
 }
 
-.shop-card__owner strong {
+.shop-card__owner strong,
+.shop-card__address strong {
   font-weight: 500;
   color: var(--p-ink);
 }

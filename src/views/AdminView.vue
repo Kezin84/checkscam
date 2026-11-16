@@ -686,6 +686,7 @@ const securityRulesJson = `{
                     </div>
                     <span class="mono admin-row__meta">
                       Chủ shop: {{ shop.ownerName || '—' }}
+                      <template v-if="shop.address"> · {{ shop.address }}</template>
                       · STK: {{ shop.bankAccounts?.[0]?.accountNumber || '—' }}
                       · {{ shop.category }}
                     </span>
