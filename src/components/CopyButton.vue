@@ -66,25 +66,31 @@ async function handleCopy() {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  min-height: 30px;
-  padding: 0 9px;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--p-line);
-  background: var(--p-surface);
-  color: var(--p-ink);
-  font-size: var(--t-label);
-  font-weight: 500;
+  min-height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(13, 116, 128, 0.22);
+  background: var(--p-accent-soft);
+  color: var(--p-accent);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   cursor: pointer;
   transition:
     background-color 150ms var(--ease),
     border-color 150ms var(--ease),
-    color 150ms var(--ease);
+    color 150ms var(--ease),
+    transform 90ms var(--ease);
+}
+
+.copy-btn:active {
+  transform: scale(0.97);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .copy-btn:hover {
-    background: var(--p-card);
-    border-color: var(--p-ink);
+    background: #d7ecef;
+    border-color: rgba(13, 116, 128, 0.45);
   }
 }
 

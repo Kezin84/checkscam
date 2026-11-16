@@ -850,19 +850,28 @@ function resolveBadgeStyle(label = '') {
   align-items: center;
   gap: 4px;
   min-height: 24px;
-  padding: 2px 6px;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--p-line);
-  background: var(--p-surface);
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--p-muted);
   cursor: pointer;
-  transition: background-color 140ms var(--ease), border-color 140ms var(--ease), color 140ms var(--ease);
+  transition:
+    background-color 140ms var(--ease),
+    border-color 140ms var(--ease),
+    color 140ms var(--ease),
+    transform 90ms var(--ease);
 }
 
-.shop-card__copy-trigger:hover {
-  background: var(--p-card);
-  border-color: var(--p-ink);
-  color: var(--p-ink);
+.shop-card__copy-trigger:active {
+  transform: scale(0.95);
+}
+
+.shop-card__copy-trigger:hover,
+.shop-card__copy-trigger[aria-expanded='true'] {
+  background: var(--p-accent-soft);
+  border-color: rgba(13, 116, 128, 0.22);
+  color: var(--p-accent);
 }
 
 .shop-card__copy-trigger.is-copied {
@@ -873,7 +882,7 @@ function resolveBadgeStyle(label = '') {
 
 .shop-card__copied-note {
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .shop-card__copy-menu {
@@ -881,12 +890,12 @@ function resolveBadgeStyle(label = '') {
   bottom: calc(100% + 6px);
   left: 0;
   z-index: 25;
-  min-width: 124px;
+  min-width: 128px;
   padding: 4px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--p-line-strong);
+  border-radius: 10px;
+  border: 1px solid var(--p-line);
   background: var(--p-card);
-  box-shadow: 0 10px 24px rgba(24, 37, 43, 0.14);
+  box-shadow: 0 8px 24px rgba(24, 37, 43, 0.12);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -896,10 +905,10 @@ function resolveBadgeStyle(label = '') {
   width: 100%;
   padding: 7px 10px;
   border: none;
-  border-radius: var(--r-sm);
+  border-radius: 7px;
   background: transparent;
   color: var(--p-ink);
-  font-size: var(--t-label);
+  font-size: 13px;
   font-weight: 500;
   text-align: left;
   cursor: pointer;
