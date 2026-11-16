@@ -115,14 +115,36 @@ function formatTelegramMessage({ reportId, report, adminUrl }) {
   return fullText.length > 4000 ? `${fullText.slice(0, 3990)}…` : fullText
 }
 
+async function readJsonBody(req) {
+  if (req.body && typeof req.body === 'object') return req.body
+  if (typeof req.body === 'string') return JSON.parse(req.body)
+
+  const chunks = []
+  for await (const chunk of req) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk)
+  }
+  const raw = Buffer.concat(chunks).toString('utf8').trim()
+  return raw ? JSON.parse(raw) : {}
+}
+
 export default async function handler(req, res) {
+  const botToken = (process.env.TELEGRAM_BOT_TOKEN || '').trim()
+  const chatId = (process.env.TELEGRAM_CHAT_ID || '').trim()
+
+  if (req.method === 'GET') {
+    return res.status(200).json({
+      ok: true,
+      endpoint: 'notify-report',
+      hasBotToken: Boolean(botToken),
+      hasChatId: Boolean(chatId)
+    })
+  }
+
   if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST')
+    res.setHeader('Allow', 'GET, POST')
     return res.status(405).json({ ok: false, error: 'Method Not Allowed' })
   }
 
-  const botToken = (process.env.TELEGRAM_BOT_TOKEN || '').trim()
-  const chatId = (process.env.TELEGRAM_CHAT_ID || '').trim()
   if (!botToken || !chatId) {
     return res.status(500).json({
       ok: false,
@@ -130,13 +152,11 @@ export default async function handler(req, res) {
     })
   }
 
-  let body = req.body
-  if (typeof body === 'string') {
-    try {
-      body = JSON.parse(body)
-    } catch {
-      return res.status(400).json({ ok: false, error: 'Invalid JSON body' })
-    }
+  let body
+  try {
+    body = await readJsonBody(req)
+  } catch {
+    return res.status(400).json({ ok: false, error: 'Invalid JSON body' })
   }
 
   const reportId = String(body?.reportId || '').trim()

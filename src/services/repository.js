@@ -433,16 +433,26 @@ export function prepareTrustedShopPayload(raw, existingCreatedAt = null) {
 async function notifyTelegramPendingReport(reportId, report) {
   try {
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 4000)
-    await fetch('/api/notify-report', {
+    const timer = setTimeout(() => controller.abort(), 8000)
+    const res = await fetch('/api/notify-report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reportId, report }),
-      keepalive: true,
       signal: controller.signal
     })
     clearTimeout(timer)
-  } catch {
+
+    const contentType = res.headers.get('content-type') || ''
+    if (!contentType.includes('application/json')) {
+      console.warn('[Telegram Notify] /api/notify-report returned non-JSON:', res.status, contentType)
+      return
+    }
+    const data = await res.json()
+    if (!res.ok || !data?.ok) {
+      console.warn('[Telegram Notify] Failed:', res.status, data?.error || data)
+    }
+  } catch (err) {
+    console.warn('[Telegram Notify] Request error:', err?.message || err)
     // Non-blocking: report is already safely persisted in Firebase RTDB
   }
 }
