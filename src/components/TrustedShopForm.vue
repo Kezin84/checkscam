@@ -3,6 +3,7 @@ import { reactive, ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import BankSelect from './BankSelect.vue'
 import PlatformSelect from './PlatformSelect.vue'
 import EvidenceUploader from './EvidenceUploader.vue'
+import ShopDossierCard from './ShopDossierCard.vue'
 import PlatformIcon from './icons/PlatformIcon.vue'
 import { useRepository } from '@/services/repository'
 import {
@@ -56,7 +57,26 @@ const SHOP_BADGE_PRESETS = [
   'Hàng chuẩn Việt'
 ]
 
+const POSITION_PRESETS = [
+  { label: 'Giữa', x: 50, y: 50 },
+  { label: 'Trên', x: 50, y: 15 },
+  { label: 'Dưới', x: 50, y: 85 },
+  { label: 'Trái', x: 15, y: 50 },
+  { label: 'Phải', x: 85, y: 50 }
+]
+
+function parsePosition(pos = '') {
+  const m = String(pos || '').trim().match(/^(\d{1,3})%\s+(\d{1,3})%$/)
+  if (!m) return { x: 50, y: 50 }
+  return {
+    x: Math.min(100, Math.max(0, Number(m[1]))),
+    y: Math.min(100, Math.max(0, Number(m[2])))
+  }
+}
+
 function createInitialState(src) {
+  const avatarPos = parsePosition(src?.avatarPosition)
+  const coverPos = parsePosition(src?.coverPosition)
   return {
     shopName: src?.shopName || '',
     ownerName: src?.ownerName || '',
@@ -66,7 +86,11 @@ function createInitialState(src) {
     verified: src?.verified !== false,
     badges: Array.isArray(src?.badges) ? [...src.badges] : [],
     avatarList: src?.avatar ? [src.avatar] : [],
+    avatarPosX: avatarPos.x,
+    avatarPosY: avatarPos.y,
     coverList: src?.coverImage ? [src.coverImage] : [],
+    coverPosX: coverPos.x,
+    coverPosY: coverPos.y,
     galleryImages: Array.isArray(src?.galleryImages) ? [...src.galleryImages] : [],
     socials:
       Array.isArray(src?.socials) && src.socials.length
@@ -81,6 +105,7 @@ function createInitialState(src) {
 }
 
 const form = reactive(createInitialState(props.initialData))
+const previewViewport = ref('desktop')
 const customBadgeInput = ref('')
 const avatarUploading = ref(false)
 const coverUploading = ref(false)
@@ -187,6 +212,43 @@ function removeBadge(idx) {
   form.badges.splice(idx, 1)
 }
 
+function applyAvatarPreset(preset) {
+  form.avatarPosX = preset.x
+  form.avatarPosY = preset.y
+}
+
+function applyCoverPreset(preset) {
+  form.coverPosX = preset.x
+  form.coverPosY = preset.y
+}
+
+const previewShop = computed(() => {
+  const shopName = form.shopName.trim() || 'Tên Shop (Xem trước)'
+  return {
+    shopName,
+    ownerName: form.ownerName.trim(),
+    address: form.address.trim(),
+    category: form.category.trim(),
+    description: form.description.trim(),
+    verified: Boolean(form.verified),
+    badges: form.badges,
+    avatar: form.avatarList[0] || '',
+    avatarPosition: `${form.avatarPosX}% ${form.avatarPosY}%`,
+    coverImage: form.coverList[0] || '',
+    coverPosition: `${form.coverPosX}% ${form.coverPosY}%`,
+    galleryImages: form.galleryImages,
+    bankAccounts: form.bankAccounts.filter(
+      (b) => b.accountNumber?.trim() || b.accountHolder?.trim() || b.bankCode?.trim()
+    ),
+    socials: form.socials
+      .filter((s) => s.usernameOrPhone?.trim() || s.url?.trim() || s.accountName?.trim())
+      .map((s) => ({
+        ...s,
+        accountName: s.accountName?.trim() || shopName
+      }))
+  }
+})
+
 function handleSubmit() {
   errors.shopName = ''
   errors.category = ''
@@ -217,7 +279,9 @@ function handleSubmit() {
     verified: Boolean(form.verified),
     badges: form.badges,
     avatar: form.avatarList[0] || '',
+    avatarPosition: `${form.avatarPosX}% ${form.avatarPosY}%`,
     coverImage: form.coverList[0] || '',
+    coverPosition: `${form.coverPosX}% ${form.coverPosY}%`,
     galleryImages: form.galleryImages,
     socials: form.socials.map((s) => ({
       ...s,
@@ -230,6 +294,7 @@ function handleSubmit() {
 </script>
 
 <template>
+  <div class="shop-editor-layout">
   <form class="shop-form" novalidate @submit.prevent="handleSubmit">
     <div class="shop-form__box">
       <h3>Thông tin định danh Shop đã xác minh</h3>
@@ -382,6 +447,33 @@ function handleSubmit() {
           button-label="Tải lên ảnh đại diện của shop"
           @uploading="(state) => (avatarUploading = state)"
         />
+        <div v-if="form.avatarList.length" class="pos-control">
+          <div class="pos-control__head">
+            <span class="label">Căn vị trí ảnh đại diện trong khung tròn</span>
+            <div class="pos-control__presets">
+              <button
+                v-for="p in POSITION_PRESETS"
+                :key="'av-' + p.label"
+                type="button"
+                class="pos-btn"
+                :class="{ 'is-active': form.avatarPosX === p.x && form.avatarPosY === p.y }"
+                @click="applyAvatarPreset(p)"
+              >
+                {{ p.label }}
+              </button>
+            </div>
+          </div>
+          <div class="pos-control__sliders">
+            <label class="pos-slider">
+              <span class="mono">Ngang {{ form.avatarPosX }}%</span>
+              <input v-model.number="form.avatarPosX" type="range" min="0" max="100" />
+            </label>
+            <label class="pos-slider">
+              <span class="mono">Dọc {{ form.avatarPosY }}%</span>
+              <input v-model.number="form.avatarPosY" type="range" min="0" max="100" />
+            </label>
+          </div>
+        </div>
       </div>
 
       <div class="field">
@@ -392,6 +484,33 @@ function handleSubmit() {
           button-label="Tải lên ảnh bìa ngang cho đầu card shop"
           @uploading="(state) => (coverUploading = state)"
         />
+        <div v-if="form.coverList.length" class="pos-control">
+          <div class="pos-control__head">
+            <span class="label">Căn vị trí ảnh bìa trên đầu card</span>
+            <div class="pos-control__presets">
+              <button
+                v-for="p in POSITION_PRESETS"
+                :key="'cv-' + p.label"
+                type="button"
+                class="pos-btn"
+                :class="{ 'is-active': form.coverPosX === p.x && form.coverPosY === p.y }"
+                @click="applyCoverPreset(p)"
+              >
+                {{ p.label }}
+              </button>
+            </div>
+          </div>
+          <div class="pos-control__sliders">
+            <label class="pos-slider">
+              <span class="mono">Ngang {{ form.coverPosX }}%</span>
+              <input v-model.number="form.coverPosX" type="range" min="0" max="100" />
+            </label>
+            <label class="pos-slider">
+              <span class="mono">Dọc {{ form.coverPosY }}%</span>
+              <input v-model.number="form.coverPosY" type="range" min="0" max="100" />
+            </label>
+          </div>
+        </div>
       </div>
 
       <div class="field">
@@ -596,13 +715,162 @@ function handleSubmit() {
       </div>
     </Teleport>
   </form>
+
+  <!-- Live Customer View Preview -->
+  <aside class="shop-preview" aria-label="Xem trước hiển thị phía khách hàng">
+    <div class="shop-preview__bar">
+      <div>
+        <span class="label">Xem trước hiển thị phía khách hàng</span>
+        <p class="shop-preview__hint">Tự cập nhật trực tiếp khi bạn chỉnh thông tin hoặc căn vị trí ảnh.</p>
+      </div>
+      <div class="shop-preview__modes" role="group" aria-label="Chế độ màn hình xem trước">
+        <button
+          type="button"
+          class="pos-btn"
+          :class="{ 'is-active': previewViewport === 'desktop' }"
+          @click="previewViewport = 'desktop'"
+        >
+          PC
+        </button>
+        <button
+          type="button"
+          class="pos-btn"
+          :class="{ 'is-active': previewViewport === 'mobile' }"
+          @click="previewViewport = 'mobile'"
+        >
+          Điện thoại
+        </button>
+      </div>
+    </div>
+
+    <div class="shop-preview__stage" :class="{ 'is-mobile': previewViewport === 'mobile' }">
+      <ShopDossierCard :shop="previewShop" />
+    </div>
+  </aside>
+  </div>
 </template>
 
 <style scoped>
+.shop-editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(380px, 500px);
+  gap: var(--s-6);
+  align-items: start;
+}
+
 .shop-form {
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
+  min-width: 0;
+}
+
+.shop-preview {
+  position: sticky;
+  top: calc(var(--nav) + 16px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--p-line);
+  background: var(--p-surface);
+}
+
+.shop-preview__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.shop-preview__hint {
+  font-size: 12px;
+  color: var(--p-muted);
+  margin-top: 2px;
+}
+
+.shop-preview__modes {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.shop-preview__stage {
+  width: 100%;
+  margin: 0 auto;
+  transition: max-width 180ms var(--ease);
+}
+
+.shop-preview__stage.is-mobile {
+  max-width: 375px;
+}
+
+.pos-control {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--p-line);
+  background: var(--p-bg);
+}
+
+.pos-control__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pos-control__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pos-btn {
+  min-height: 28px;
+  padding: 3px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--p-line);
+  background: var(--p-card);
+  color: var(--p-ink);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 140ms var(--ease), border-color 140ms var(--ease), color 140ms var(--ease);
+}
+
+.pos-btn:hover {
+  border-color: var(--p-accent);
+}
+
+.pos-btn.is-active {
+  background: var(--p-accent);
+  border-color: var(--p-accent);
+  color: #ffffff;
+}
+
+.pos-control__sliders {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pos-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--p-muted);
+}
+
+.pos-slider input[type='range'] {
+  width: 100%;
+  accent-color: var(--p-accent);
+  cursor: pointer;
 }
 
 .shop-form__box {
@@ -868,10 +1136,20 @@ function handleSubmit() {
   color: var(--p-muted);
 }
 
+@media (max-width: 1120px) {
+  .shop-editor-layout {
+    grid-template-columns: 1fr;
+  }
+  .shop-preview {
+    position: static;
+  }
+}
+
 @media (max-width: 960px) {
   .shop-form__grid-4,
   .shop-form__grid-3,
-  .shop-form__grid-2 {
+  .shop-form__grid-2,
+  .pos-control__sliders {
     grid-template-columns: 1fr;
   }
 }

@@ -122,6 +122,7 @@ function resolveBadgeStyle(label = '') {
       <img
         :src="optimizeCloudinaryUrl(shop.coverImage, 960)"
         :alt="`Ảnh bìa ${shop.shopName}`"
+        :style="{ objectPosition: shop.coverPosition || '50% 50%' }"
         loading="lazy"
       />
     </button>
@@ -139,6 +140,7 @@ function resolveBadgeStyle(label = '') {
           <img
             :src="optimizeCloudinaryUrl(shop.avatar, 240)"
             :alt="`Ảnh đại diện ${shop.shopName}`"
+            :style="{ objectPosition: shop.avatarPosition || '50% 50%' }"
             loading="lazy"
           />
         </button>

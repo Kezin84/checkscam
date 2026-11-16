@@ -414,6 +414,14 @@ export function prepareScamReportPayload(raw, existingCreatedAt = null) {
   }
 }
 
+function sanitizePosition(pos = '') {
+  const m = String(pos || '').trim().match(/^(\d{1,3})%\s+(\d{1,3})%$/)
+  if (!m) return '50% 50%'
+  const x = Math.min(100, Math.max(0, Number(m[1])))
+  const y = Math.min(100, Math.max(0, Number(m[2])))
+  return `${x}% ${y}%`
+}
+
 export function prepareTrustedShopPayload(raw, existingCreatedAt = null) {
   const bankAccounts = sanitizeBankAccounts(raw.bankAccounts)
   const socials = sanitizeSocials(raw.socials)
@@ -425,7 +433,9 @@ export function prepareTrustedShopPayload(raw, existingCreatedAt = null) {
     ownerName: String(raw.ownerName || '').trim(),
     address: String(raw.address || '').trim(),
     avatar: String(raw.avatar || '').trim(),
+    avatarPosition: sanitizePosition(raw.avatarPosition),
     coverImage: String(raw.coverImage || '').trim(),
+    coverPosition: sanitizePosition(raw.coverPosition),
     galleryImages: sanitizeLinks(raw.galleryImages),
     category,
     categoryKey: toSafeIndexKey(category),
