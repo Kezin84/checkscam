@@ -83,6 +83,12 @@ function formatBankCopyValue(b) {
   return [stk, bankName, holder].filter(Boolean).join('\n')
 }
 
+function openSocialLink(soc) {
+  const url = resolveSocialUrl(soc)
+  if (!url) return
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
+
 function resolveBadgeStyle(label = '') {
   const s = String(label).toLowerCase()
   if (/(ngon|best|hot|chuẩn|đặc sản|chất lượng|thơm|sạch|nổi bật)/.test(s)) {
@@ -297,7 +303,16 @@ function resolveBadgeStyle(label = '') {
     <div v-if="socialList.length" class="shop-card__section">
       <span class="label">Kênh mạng xã hội chính thức</span>
       <div class="rows">
-        <div v-for="(soc, sIdx) in socialList" :key="sIdx" class="rows__item shop-card__row">
+        <div
+          v-for="(soc, sIdx) in socialList"
+          :key="sIdx"
+          class="rows__item shop-card__row"
+          :class="{ 'shop-card__row--clickable': Boolean(resolveSocialUrl(soc)) }"
+          :role="resolveSocialUrl(soc) ? 'link' : undefined"
+          :tabindex="resolveSocialUrl(soc) ? 0 : undefined"
+          @click="openSocialLink(soc)"
+          @keydown.enter.prevent="openSocialLink(soc)"
+        >
           <div class="shop-card__row-main">
             <PlatformIcon :platform="soc.platform" />
             <div class="shop-card__row-text">
@@ -310,7 +325,7 @@ function resolveBadgeStyle(label = '') {
               </span>
             </div>
           </div>
-          <div class="shop-card__actions">
+          <div class="shop-card__actions" @click.stop>
             <CopyButton
               v-if="resolveSocialId(soc)"
               :value="resolveSocialId(soc)"
@@ -327,6 +342,7 @@ function resolveBadgeStyle(label = '') {
               target="_blank"
               rel="noopener noreferrer"
               class="link shop-card__ext"
+              @click.stop
             >
               <span>Mở kênh</span>
               <svg viewBox="0 0 14 14" width="12" height="12" fill="none" aria-hidden="true">
@@ -553,6 +569,17 @@ function resolveBadgeStyle(label = '') {
 .shop-card__row {
   flex-wrap: wrap;
   gap: 10px 14px;
+}
+
+.shop-card__row--clickable {
+  cursor: pointer;
+  transition: background-color 150ms var(--ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .shop-card__row--clickable:hover {
+    background: var(--p-accent-soft);
+  }
 }
 
 .shop-card__row-main {
