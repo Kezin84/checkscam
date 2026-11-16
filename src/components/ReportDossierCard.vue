@@ -1,16 +1,13 @@
 <script setup>
 import { ref, computed } from 'vue'
-import PlatformIcon from './icons/PlatformIcon.vue'
 import CopyButton from './CopyButton.vue'
 import LightboxModal from './LightboxModal.vue'
+import SocialChannelList from './SocialChannelList.vue'
 import { useBanks } from '@/services/banks'
 import { optimizeCloudinaryUrl } from '@/services/cloudinary'
 import {
   formatDateVi,
-  formatCurrencyVi,
-  platformLabel,
-  resolveSocialId,
-  resolveSocialUrl
+  formatCurrencyVi
 } from '@/utils/normalize'
 
 const props = defineProps({
@@ -133,47 +130,7 @@ function matchBadgeLabel(type) {
     <!-- Social accounts ledger -->
     <div v-if="socialList.length" class="dossier__section">
       <span class="label">Tài khoản mạng xã hội liên quan</span>
-      <div class="rows">
-        <div v-for="(soc, sIdx) in socialList" :key="sIdx" class="rows__item dossier__soc-row">
-          <div class="dossier__soc-main">
-            <PlatformIcon :platform="soc.platform" />
-            <div class="dossier__soc-text">
-              <div class="dossier__soc-line">
-                <span class="dossier__soc-platform">{{ platformLabel(soc.platform) }}</span>
-                <span v-if="soc.accountName" class="dossier__soc-name"> · {{ soc.accountName }}</span>
-              </div>
-              <span v-if="resolveSocialId(soc)" class="mono dossier__soc-handle">
-                {{ resolveSocialId(soc) }}
-              </span>
-            </div>
-          </div>
-
-          <div class="dossier__soc-actions">
-            <CopyButton
-              v-if="resolveSocialId(soc)"
-              :value="resolveSocialId(soc)"
-              label="Copy ID"
-            />
-            <CopyButton
-              v-if="resolveSocialUrl(soc)"
-              :value="resolveSocialUrl(soc)"
-              label="Copy link"
-            />
-            <a
-              v-if="resolveSocialUrl(soc)"
-              :href="resolveSocialUrl(soc)"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="link dossier__ext-link"
-            >
-              <span>Mở liên kết</span>
-              <svg viewBox="0 0 14 14" width="12" height="12" fill="none" aria-hidden="true">
-                <path d="M4 10L10 4M10 4H5.2M10 4V8.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
-              </svg>
-            </a>
-          </div>
-        </div>
-      </div>
+      <SocialChannelList :socials="socialList" />
     </div>
 
     <!-- Description -->
@@ -299,14 +256,12 @@ function matchBadgeLabel(type) {
   gap: 8px;
 }
 
-.dossier__bank-row,
-.dossier__soc-row {
+.dossier__bank-row {
   flex-wrap: wrap;
   gap: 10px 14px;
 }
 
-.dossier__bank-main,
-.dossier__soc-main {
+.dossier__bank-main {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -335,8 +290,7 @@ function matchBadgeLabel(type) {
   object-fit: contain;
 }
 
-.dossier__bank-text,
-.dossier__soc-text {
+.dossier__bank-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -350,12 +304,7 @@ function matchBadgeLabel(type) {
   gap: 8px;
 }
 
-.dossier__soc-line {
-  line-height: 1.4;
-}
-
-.dossier__bank-name,
-.dossier__soc-platform {
+.dossier__bank-name {
   font-size: var(--t-small);
   font-weight: 500;
   color: var(--p-ink);
@@ -368,27 +317,10 @@ function matchBadgeLabel(type) {
   letter-spacing: 0.02em;
 }
 
-.dossier__holder,
-.dossier__soc-handle {
+.dossier__holder {
   font-size: 13px;
   color: var(--p-muted);
   word-break: break-all;
-}
-
-.dossier__soc-name {
-  font-size: var(--t-small);
-  color: var(--p-text);
-}
-
-.dossier__soc-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
-.dossier__ext-link {
-  font-size: var(--t-small);
 }
 
 .dossier__desc {
