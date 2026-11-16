@@ -6,6 +6,7 @@ import {
   searchRecordsOnServer
 } from '@/services/repository'
 import { useServerFeed } from '@/composables/useServerFeed'
+import CategorySelect from '@/components/CategorySelect.vue'
 
 const ShopDossierCard = defineAsyncComponent(() => import('@/components/ShopDossierCard.vue'))
 
@@ -96,12 +97,12 @@ const {
 
         <div class="field filter-bar__select">
           <label for="shop-filter-cat" class="field__label">Lĩnh vực hoạt động</label>
-          <select id="shop-filter-cat" v-model="activeCategory" class="field__select filter-pill-select">
-            <option value="all">Tất cả lĩnh vực ({{ siteMeta.shopsCount }})</option>
-            <option v-for="cat in dbCategories" :key="cat.key" :value="cat.label">
-              {{ cat.label }} ({{ cat.count }})
-            </option>
-          </select>
+          <CategorySelect
+            input-id="shop-filter-cat"
+            v-model="activeCategory"
+            :categories="dbCategories"
+            :total-count="siteMeta.shopsCount"
+          />
         </div>
       </div>
 
@@ -163,6 +164,8 @@ const {
 }
 
 .filter-bar {
+  position: relative;
+  z-index: 10;
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: var(--s-4);
@@ -211,17 +214,6 @@ const {
 
 .search-pill__input:focus {
   outline: none;
-}
-
-.filter-pill-select {
-  border-radius: 999px;
-  border: 1.5px solid rgba(13, 116, 128, 0.34);
-  padding: 0 42px 0 18px;
-  background-position: right 16px center;
-}
-
-.filter-pill-select:hover {
-  border-color: rgba(13, 116, 128, 0.58);
 }
 
 .cards-grid {
