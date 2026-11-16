@@ -501,7 +501,7 @@ function resolveBadgeStyle(label = '') {
   display: block;
   width: 100%;
   height: auto;
-  max-height: 360px;
+  max-height: 200px;
   object-fit: contain;
   transition: transform var(--m-image-out) var(--ease);
 }
@@ -624,7 +624,7 @@ function resolveBadgeStyle(label = '') {
 
 @media (max-width: 639px) {
   .shop-card__cover img {
-    max-height: 260px;
+    max-height: 150px;
   }
   .shop-card__body {
     padding: var(--s-5);
