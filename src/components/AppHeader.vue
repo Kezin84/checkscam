@@ -1,7 +1,42 @@
 <script setup>
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+const dockHidden = ref(false)
+let lastScrollY = 0
+
+function onWindowScroll() {
+  const currentY = Math.max(0, window.scrollY || window.pageYOffset || 0)
+  if (currentY <= 48) {
+    dockHidden.value = false
+    lastScrollY = currentY
+    return
+  }
+
+  const delta = currentY - lastScrollY
+  if (Math.abs(delta) < 8) return
+
+  dockHidden.value = delta > 0
+  lastScrollY = currentY
+}
+
+watch(
+  () => route.fullPath,
+  () => {
+    dockHidden.value = false
+    lastScrollY = typeof window !== 'undefined' ? Math.max(0, window.scrollY || 0) : 0
+  }
+)
+
+onMounted(() => {
+  lastScrollY = Math.max(0, window.scrollY || window.pageYOffset || 0)
+  window.addEventListener('scroll', onWindowScroll, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', onWindowScroll)
+})
 </script>
 
 <template>
@@ -60,7 +95,12 @@ const route = useRoute()
   </header>
 
   <!-- Mobile Dock Bottom Bar -->
-  <nav class="mobile-dock" aria-label="Điều hướng di động">
+  <nav
+    class="mobile-dock"
+    :class="{ 'is-hidden': dockHidden }"
+    :aria-hidden="dockHidden ? 'true' : undefined"
+    aria-label="Điều hướng di động"
+  >
     <RouterLink
       to="/"
       class="mobile-dock__item"
@@ -248,6 +288,15 @@ const route = useRoute()
     border-radius: var(--r-lg);
     box-shadow: 0 10px 28px rgba(24, 37, 43, 0.16);
     z-index: 45;
+    transition:
+      transform 220ms var(--ease),
+      opacity 180ms var(--ease);
+  }
+
+  .mobile-dock.is-hidden {
+    transform: translateY(calc(100% + 24px + env(safe-area-inset-bottom, 0px)));
+    opacity: 0;
+    pointer-events: none;
   }
 
   .mobile-dock__item {
