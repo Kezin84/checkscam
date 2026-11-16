@@ -1,7 +1,7 @@
 export function installClientGuards() {
   if (typeof window === 'undefined' || typeof document === 'undefined') return
 
-  // 1. Block F12, Inspect/Console/Source shortcuts, and Ctrl/Cmd +/-/0 zoom
+  // 1. Block F12 and Inspect/Console/Source shortcuts (allow PC browser zoom shortcuts)
   window.addEventListener(
     'keydown',
     (e) => {
@@ -27,17 +27,6 @@ export function installClientGuards() {
         e.stopPropagation()
         return false
       }
-
-      // Keyboard zoom: Ctrl/Cmd + (+, =, -, _, 0)
-      if (
-        mod &&
-        (['+', '=', '-', '_', '0'].includes(key) ||
-          [187, 189, 107, 109, 48, 96].includes(code))
-      ) {
-        e.preventDefault()
-        e.stopPropagation()
-        return false
-      }
     },
     { capture: true }
   )
@@ -51,20 +40,15 @@ export function installClientGuards() {
     { capture: true }
   )
 
-  // 3. Block Ctrl + Mouse Wheel & Trackpad pinch-to-zoom on desktop
-  window.addEventListener(
-    'wheel',
-    (e) => {
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault()
-      }
-    },
-    { passive: false, capture: true }
-  )
+  // 3. Keep pinch-to-zoom blocked on mobile/touch devices, while allowing zoom on PC
+  const isTouchMobile = () =>
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(hover: none) and (pointer: coarse)').matches
 
-  // 4. Block pinch-to-zoom on iOS Safari & mobile browsers
   const blockGesture = (e) => {
-    e.preventDefault()
+    if (isTouchMobile()) {
+      e.preventDefault()
+    }
   }
   document.addEventListener('gesturestart', blockGesture, { passive: false })
   document.addEventListener('gesturechange', blockGesture, { passive: false })
@@ -73,7 +57,7 @@ export function installClientGuards() {
   document.addEventListener(
     'touchmove',
     (e) => {
-      if (e.touches && e.touches.length > 1) {
+      if (isTouchMobile() && e.touches && e.touches.length > 1) {
         e.preventDefault()
       }
     },
