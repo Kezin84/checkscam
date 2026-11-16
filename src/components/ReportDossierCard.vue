@@ -98,10 +98,12 @@ function matchBadgeLabel(type) {
       <p v-if="report.subjectDescription" class="dossier__subject-desc">
         {{ report.subjectDescription }}
       </p>
-      <div v-if="incidentList.length > 1" class="dossier__scam-meta">
-        <span class="dossier__method">{{ incidentList.length }} vụ việc ghi nhận</span>
-        <span v-if="totalScamAmount > 0" class="mono dossier__amount">
-          Tổng thiệt hại: {{ formatCurrencyVi(totalScamAmount) }}
+      <div v-if="totalScamAmount > 0 || incidentList.length > 1" class="dossier__scam-meta">
+        <span v-if="totalScamAmount > 0" class="mono dossier__total-amount">
+          Tổng số tiền bị lừa: <strong>{{ formatCurrencyVi(totalScamAmount) }}</strong>
+        </span>
+        <span v-if="incidentList.length > 1" class="dossier__method">
+          {{ incidentList.length }} vụ việc ghi nhận
         </span>
       </div>
     </div>
@@ -269,9 +271,15 @@ function matchBadgeLabel(type) {
 
 .dossier__subject-desc {
   font-size: var(--t-small);
-  color: var(--p-muted);
+  font-weight: 500;
+  color: var(--p-danger);
   line-height: 1.55;
   white-space: pre-line;
+}
+
+.dossier__total-amount {
+  font-size: var(--t-small);
+  color: var(--p-danger);
 }
 
 .dossier__scam-meta {

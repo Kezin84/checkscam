@@ -9,7 +9,8 @@ import {
   SCAM_TYPES,
   detectPlatformFromInput,
   extractSocialIdentifier,
-  normalizeAccountHolder
+  normalizeAccountHolder,
+  formatCurrencyVi
 } from '@/utils/normalize'
 
 const props = defineProps({
@@ -102,6 +103,15 @@ function createInitialState(src) {
 const form = reactive(createInitialState(props.initialData))
 const uploadingMap = reactive({})
 const isUploading = computed(() => Object.values(uploadingMap).some(Boolean))
+const autoTotalScamAmount = computed(() =>
+  form.incidents.reduce(
+    (sum, inc) => sum + (Number(String(inc.scamAmount || '').replace(/[^\d]/g, '')) || 0),
+    0
+  )
+)
+const autoTotalScamAmountFormatted = computed(() =>
+  autoTotalScamAmount.value > 0 ? formatCurrencyVi(autoTotalScamAmount.value) : '0 ₫'
+)
 const scamModalOpen = ref(false)
 const scamModalTargetIdx = ref(0)
 const errors = reactive({
@@ -323,9 +333,24 @@ function handleSubmit() {
         <textarea
           id="rf-subject-desc"
           v-model="form.subjectDescription"
-          class="field__textarea"
+          class="field__textarea field__textarea--danger"
           placeholder="Ghi chú tổng quan về đối tượng (ví dụ: chuyên giả mạo shop uy tín, dùng nhiều nick clone...)"
         ></textarea>
+      </div>
+
+      <div v-if="mode !== 'public'" class="field">
+        <label for="rf-total-amount" class="field__label">
+          <span>Tổng số tiền bị lừa</span>
+          <span class="field__hint">Tự động cộng tổng từ các cụm vụ việc bên dưới</span>
+        </label>
+        <input
+          id="rf-total-amount"
+          :value="autoTotalScamAmountFormatted"
+          type="text"
+          class="field__input mono field__input--readonly"
+          readonly
+          aria-readonly="true"
+        />
       </div>
 
       <div class="repeat-list">
@@ -798,6 +823,18 @@ function handleSubmit() {
   display: flex;
   flex-direction: column;
   gap: var(--s-4);
+}
+
+.field__textarea--danger {
+  color: var(--p-danger);
+  font-weight: 500;
+}
+
+.field__input--readonly {
+  background: var(--p-surface);
+  color: var(--p-danger);
+  font-weight: 600;
+  cursor: default;
 }
 
 .expose-inputs {

@@ -241,9 +241,9 @@ h3 {
 }
 
 .stamp--danger {
-  background: var(--p-danger-bg);
-  border-color: var(--p-danger-line);
-  color: var(--p-danger);
+  background: var(--p-danger);
+  border-color: var(--p-danger);
+  color: #ffffff;
 }
 
 .stamp--verified {
