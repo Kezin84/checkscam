@@ -1,7 +1,8 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import PlatformIcon from './icons/PlatformIcon.vue'
 import CopyButton from './CopyButton.vue'
+import LightboxModal from './LightboxModal.vue'
 import { useBanks } from '@/services/banks'
 import { optimizeCloudinaryUrl } from '@/services/cloudinary'
 import {
@@ -23,6 +24,7 @@ const props = defineProps({
 })
 
 const { findBank } = useBanks()
+const lightboxIdx = ref(-1)
 
 const bankList = computed(() => {
   return Array.isArray(props.shop.bankAccounts) ? props.shop.bankAccounts : []
@@ -30,6 +32,10 @@ const bankList = computed(() => {
 
 const socialList = computed(() => {
   return Array.isArray(props.shop.socials) ? props.shop.socials : []
+})
+
+const galleryList = computed(() => {
+  return Array.isArray(props.shop.galleryImages) ? props.shop.galleryImages.filter(Boolean) : []
 })
 
 const initials = computed(() => {
@@ -65,13 +71,13 @@ function formatBankCopyValue(b) {
   <article class="card shop-card">
     <div class="shop-card__head">
       <div class="shop-card__badges">
-        <span class="stamp stamp--verified">
-          <svg viewBox="0 0 16 16" width="13" height="13" fill="none" aria-hidden="true">
-            <path d="M2.8 8.3L6.2 11.7L13.4 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
+        <span class="stamp shop-card__verified">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" aria-hidden="true">
+            <circle cx="8" cy="8" r="7.5" fill="#ffffff" />
+            <path d="M4.6 8.2L6.9 10.5L11.5 5.7" stroke="#086552" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
           <span>Đã xác minh</span>
         </span>
-        <span v-if="shop.category" class="stamp">{{ shop.category }}</span>
       </div>
       <span class="mono shop-card__date">Xác minh {{ formatDateVi(shop.createdAt) }}</span>
     </div>
@@ -88,6 +94,7 @@ function formatBankCopyValue(b) {
       </div>
       <div class="shop-card__title-wrap">
         <h3 class="shop-card__name">{{ shop.shopName }}</h3>
+        <p v-if="shop.category" class="shop-card__category">{{ shop.category }}</p>
         <p v-if="shop.ownerName" class="shop-card__owner">
           Chủ sở hữu: <strong>{{ shop.ownerName }}</strong>
         </p>
@@ -95,6 +102,23 @@ function formatBankCopyValue(b) {
           Địa chỉ: <strong>{{ shop.address }}</strong>
         </p>
       </div>
+    </div>
+
+    <div v-if="galleryList.length" class="shop-card__gallery">
+      <button
+        v-for="(img, idx) in galleryList"
+        :key="img + idx"
+        type="button"
+        class="m-zoom shop-card__thumb"
+        :aria-label="`Xem ảnh menu hoặc sản phẩm ${idx + 1} của ${shop.shopName}`"
+        @click="lightboxIdx = idx"
+      >
+        <img
+          :src="optimizeCloudinaryUrl(img, 240)"
+          :alt="`Ảnh giới thiệu ${idx + 1} của ${shop.shopName}`"
+          loading="lazy"
+        />
+      </button>
     </div>
 
     <p v-if="shop.description" class="shop-card__desc">
@@ -181,6 +205,13 @@ function formatBankCopyValue(b) {
         </div>
       </div>
     </div>
+
+    <LightboxModal
+      :images="galleryList"
+      :active-index="lightboxIdx"
+      @close="lightboxIdx = -1"
+      @change="(i) => (lightboxIdx = i)"
+    />
   </article>
 </template>
 
@@ -207,6 +238,13 @@ function formatBankCopyValue(b) {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+.shop-card__verified {
+  background: var(--p-verified);
+  border-color: var(--p-verified);
+  color: #ffffff;
+  font-weight: 600;
 }
 
 .shop-card__date {
@@ -254,6 +292,13 @@ function formatBankCopyValue(b) {
   color: var(--p-ink);
 }
 
+.shop-card__category {
+  font-size: var(--t-small);
+  font-weight: 500;
+  color: var(--p-accent);
+  line-height: 1.4;
+}
+
 .shop-card__owner,
 .shop-card__address {
   font-size: var(--t-small);
@@ -264,6 +309,20 @@ function formatBankCopyValue(b) {
 .shop-card__address strong {
   font-weight: 500;
   color: var(--p-ink);
+}
+
+.shop-card__gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.shop-card__thumb {
+  width: 68px;
+  height: 68px;
+  padding: 0;
+  cursor: zoom-in;
+  flex-shrink: 0;
 }
 
 .shop-card__desc {

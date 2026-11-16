@@ -53,6 +53,7 @@ function createInitialState(src) {
     category: src?.category || '',
     description: src?.description || '',
     avatarList: src?.avatar ? [src.avatar] : [],
+    galleryImages: Array.isArray(src?.galleryImages) ? [...src.galleryImages] : [],
     socials:
       Array.isArray(src?.socials) && src.socials.length
         ? src.socials.map((s) => ({ ...emptySocial(), ...s }))
@@ -66,7 +67,9 @@ function createInitialState(src) {
 }
 
 const form = reactive(createInitialState(props.initialData))
-const isUploading = ref(false)
+const avatarUploading = ref(false)
+const galleryUploading = ref(false)
+const isUploading = computed(() => avatarUploading.value || galleryUploading.value)
 const categoryModalOpen = ref(false)
 const errors = reactive({
   shopName: '',
@@ -168,6 +171,7 @@ function handleSubmit() {
     category: form.category.trim(),
     description: form.description.trim(),
     avatar: form.avatarList[0] || '',
+    galleryImages: form.galleryImages,
     socials: form.socials.map((s) => ({
       ...s,
       accountName: s.accountName.trim() || form.shopName.trim()
@@ -261,7 +265,17 @@ function handleSubmit() {
           v-model="form.avatarList"
           single
           button-label="Tải lên ảnh đại diện của shop"
-          @uploading="(state) => (isUploading = state)"
+          @uploading="(state) => (avatarUploading = state)"
+        />
+      </div>
+
+      <div class="field">
+        <span class="field__label">Ảnh menu / món ăn / sản phẩm nổi bật (Tùy chọn, tối đa 8 ảnh)</span>
+        <EvidenceUploader
+          v-model="form.galleryImages"
+          :max-files="8"
+          button-label="Tải lên ảnh menu hoặc sản phẩm của shop"
+          @uploading="(state) => (galleryUploading = state)"
         />
       </div>
     </div>
