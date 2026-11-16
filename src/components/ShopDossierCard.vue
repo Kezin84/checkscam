@@ -111,52 +111,68 @@ function resolveBadgeStyle(label = '') {
 </script>
 
 <template>
-  <article class="card shop-card" :class="{ 'shop-card--verified': isVerified }">
-    <div class="shop-card__identity">
-      <button
-        v-if="shop.avatar"
-        type="button"
-        class="m-zoom shop-card__avatar shop-card__avatar--btn"
-        :aria-label="`Xem ảnh đại diện của ${shop.shopName}`"
-        @click="openLightbox([shop.avatar], 0)"
-      >
-        <img
-          :src="optimizeCloudinaryUrl(shop.avatar, 240)"
-          :alt="`Ảnh đại diện ${shop.shopName}`"
-          loading="lazy"
-        />
-      </button>
-      <div v-else class="shop-card__avatar">
-        <span>{{ initials }}</span>
-      </div>
-      <div class="shop-card__title-wrap">
-        <div class="shop-card__name-row">
-          <h3 class="shop-card__name">{{ shop.shopName }}</h3>
-          <span
-            v-if="isVerified"
-            class="shop-card__fb-tick"
-            title="Shop đã xác minh"
-            aria-label="Shop đã xác minh"
-          >
-            <svg viewBox="0 0 20 20" width="19" height="19" fill="none" aria-hidden="true">
-              <path
-                d="M10 1.4L12.3 2.8L14.9 2.6L16.1 5L18.4 6.3L18.1 8.9L19.4 11.2L17.6 13.1L17.4 15.7L14.9 16.5L13.3 18.6L10.7 17.9L8.3 19.1L6.3 17.3L3.7 17.2L3 14.7L1 13L1.8 10.5L0.9 8L2.9 6.3L3.4 3.7L6 3.3L7.8 1.5L10 1.4Z"
-                fill="#1877F2"
-              />
-              <path
-                d="M6.7 10.3L8.9 12.5L13.6 7.7"
-                stroke="#ffffff"
-                stroke-width="2.1"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </span>
+  <article class="card shop-card">
+    <button
+      v-if="shop.coverImage"
+      type="button"
+      class="shop-card__cover shop-card__cover--btn"
+      :aria-label="`Xem ảnh bìa của ${shop.shopName}`"
+      @click="openLightbox([shop.coverImage], 0)"
+    >
+      <img
+        :src="optimizeCloudinaryUrl(shop.coverImage, 960)"
+        :alt="`Ảnh bìa ${shop.shopName}`"
+        loading="lazy"
+      />
+    </button>
+    <div v-else class="shop-card__cover shop-card__cover--fallback" aria-hidden="true"></div>
+
+    <div class="shop-card__body">
+      <div class="shop-card__identity">
+        <button
+          v-if="shop.avatar"
+          type="button"
+          class="m-zoom shop-card__avatar shop-card__avatar--btn"
+          :aria-label="`Xem ảnh đại diện của ${shop.shopName}`"
+          @click="openLightbox([shop.avatar], 0)"
+        >
+          <img
+            :src="optimizeCloudinaryUrl(shop.avatar, 240)"
+            :alt="`Ảnh đại diện ${shop.shopName}`"
+            loading="lazy"
+          />
+        </button>
+        <div v-else class="shop-card__avatar">
+          <span>{{ initials }}</span>
         </div>
+        <div class="shop-card__title-wrap">
+          <div class="shop-card__name-row">
+            <h3 class="shop-card__name">{{ shop.shopName }}</h3>
+            <span
+              v-if="isVerified"
+              class="shop-card__fb-tick"
+              title="Shop đã xác minh"
+              aria-label="Shop đã xác minh"
+            >
+              <svg viewBox="0 0 20 20" width="19" height="19" fill="none" aria-hidden="true">
+                <path
+                  d="M10 1.4L12.3 2.8L14.9 2.6L16.1 5L18.4 6.3L18.1 8.9L19.4 11.2L17.6 13.1L17.4 15.7L14.9 16.5L13.3 18.6L10.7 17.9L8.3 19.1L6.3 17.3L3.7 17.2L3 14.7L1 13L1.8 10.5L0.9 8L2.9 6.3L3.4 3.7L6 3.3L7.8 1.5L10 1.4Z"
+                  fill="#1877F2"
+                />
+                <path
+                  d="M6.7 10.3L8.9 12.5L13.6 7.7"
+                  stroke="#ffffff"
+                  stroke-width="2.1"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+          </div>
 
-        <span v-if="shop.category" class="shop-card__category">{{ shop.category }}</span>
+          <span v-if="shop.category" class="shop-card__category">{{ shop.category }}</span>
 
-        <div v-if="badgeList.length" class="shop-card__tags">
+          <div v-if="badgeList.length" class="shop-card__tags">
           <span
             v-for="(badge, bIdx) in badgeList"
             :key="badge + bIdx"
@@ -353,6 +369,7 @@ function resolveBadgeStyle(label = '') {
         </div>
       </div>
     </div>
+    </div>
 
     <LightboxModal
       :images="lightboxImages"
@@ -367,38 +384,81 @@ function resolveBadgeStyle(label = '') {
 .shop-card {
   display: flex;
   flex-direction: column;
-  gap: var(--s-5);
+  padding: 0;
+  overflow: hidden;
   content-visibility: auto;
-  contain-intrinsic-size: auto 380px;
+  contain-intrinsic-size: auto 460px;
 }
 
-.shop-card--verified {
-  border-left: 3px solid #1877f2;
+.shop-card__cover {
+  display: block;
+  width: 100%;
+  height: 152px;
+  padding: 0;
+  border: none;
+  border-bottom: 1px solid var(--p-line);
+  background: var(--p-surface);
+  overflow: hidden;
+}
+
+.shop-card__cover--btn {
+  cursor: zoom-in;
+}
+
+.shop-card__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--m-image-out) var(--ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .shop-card__cover--btn:hover img {
+    transform: scale(1.02);
+    transition-duration: var(--m-image);
+  }
+}
+
+.shop-card__cover--fallback {
+  height: 92px;
+  background: linear-gradient(135deg, #dff0f3 0%, #ecf2f5 55%, #e2ecef 100%);
+}
+
+.shop-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  padding: 0 var(--s-6) var(--s-6);
 }
 
 .shop-card__identity {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  margin-top: -46px;
 }
 
 .shop-card__avatar {
-  width: 64px;
-  height: 64px;
+  position: relative;
+  z-index: 1;
+  width: 92px;
+  height: 92px;
   padding: 0;
-  border-radius: var(--r-md);
-  border: 1px solid var(--p-line);
+  border-radius: 50%;
+  border: 4px solid var(--p-card);
   background: var(--p-surface);
   color: var(--p-ink);
   font-family: var(--font-display);
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(24, 37, 43, 0.08);
+  box-shadow: 0 4px 14px rgba(24, 37, 43, 0.14);
 }
 
 .shop-card__avatar--btn {
@@ -407,8 +467,8 @@ function resolveBadgeStyle(label = '') {
 }
 
 .shop-card__avatar--btn:hover {
-  border-color: var(--p-accent);
-  box-shadow: 0 2px 8px rgba(13, 116, 128, 0.16);
+  border-color: var(--p-card);
+  box-shadow: 0 6px 18px rgba(13, 116, 128, 0.24);
 }
 
 .shop-card__avatar img {
@@ -420,14 +480,17 @@ function resolveBadgeStyle(label = '') {
 .shop-card__title-wrap {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 5px;
   min-width: 0;
+  width: 100%;
 }
 
 .shop-card__name-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 7px;
 }
 
@@ -450,7 +513,7 @@ function resolveBadgeStyle(label = '') {
   display: inline-flex;
   align-items: center;
   width: fit-content;
-  padding: 2px 8px;
+  padding: 2px 10px;
   margin-top: 2px;
   border-radius: var(--r-sm);
   background: var(--p-accent-soft);
@@ -464,8 +527,29 @@ function resolveBadgeStyle(label = '') {
 .shop-card__tags {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 6px;
-  margin-top: 6px;
+  margin-top: 4px;
+}
+
+@media (max-width: 639px) {
+  .shop-card__cover {
+    height: 128px;
+  }
+  .shop-card__cover--fallback {
+    height: 80px;
+  }
+  .shop-card__body {
+    padding: 0 var(--s-5) var(--s-5);
+  }
+  .shop-card__identity {
+    margin-top: -40px;
+  }
+  .shop-card__avatar {
+    width: 80px;
+    height: 80px;
+    font-size: 20px;
+  }
 }
 
 .shop-card__tag {

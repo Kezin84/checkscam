@@ -66,6 +66,7 @@ function createInitialState(src) {
     verified: src?.verified !== false,
     badges: Array.isArray(src?.badges) ? [...src.badges] : [],
     avatarList: src?.avatar ? [src.avatar] : [],
+    coverList: src?.coverImage ? [src.coverImage] : [],
     galleryImages: Array.isArray(src?.galleryImages) ? [...src.galleryImages] : [],
     socials:
       Array.isArray(src?.socials) && src.socials.length
@@ -82,8 +83,9 @@ function createInitialState(src) {
 const form = reactive(createInitialState(props.initialData))
 const customBadgeInput = ref('')
 const avatarUploading = ref(false)
+const coverUploading = ref(false)
 const galleryUploading = ref(false)
-const isUploading = computed(() => avatarUploading.value || galleryUploading.value)
+const isUploading = computed(() => avatarUploading.value || coverUploading.value || galleryUploading.value)
 const categoryModalOpen = ref(false)
 const errors = reactive({
   shopName: '',
@@ -215,6 +217,7 @@ function handleSubmit() {
     verified: Boolean(form.verified),
     badges: form.badges,
     avatar: form.avatarList[0] || '',
+    coverImage: form.coverList[0] || '',
     galleryImages: form.galleryImages,
     socials: form.socials.map((s) => ({
       ...s,
@@ -378,6 +381,16 @@ function handleSubmit() {
           single
           button-label="Tải lên ảnh đại diện của shop"
           @uploading="(state) => (avatarUploading = state)"
+        />
+      </div>
+
+      <div class="field">
+        <span class="field__label">Ảnh bìa Shop / Banner ngang (Tùy chọn)</span>
+        <EvidenceUploader
+          v-model="form.coverList"
+          single
+          button-label="Tải lên ảnh bìa ngang cho đầu card shop"
+          @uploading="(state) => (coverUploading = state)"
         />
       </div>
 

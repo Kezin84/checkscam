@@ -425,6 +425,7 @@ export function prepareTrustedShopPayload(raw, existingCreatedAt = null) {
     ownerName: String(raw.ownerName || '').trim(),
     address: String(raw.address || '').trim(),
     avatar: String(raw.avatar || '').trim(),
+    coverImage: String(raw.coverImage || '').trim(),
     galleryImages: sanitizeLinks(raw.galleryImages),
     category,
     categoryKey: toSafeIndexKey(category),
