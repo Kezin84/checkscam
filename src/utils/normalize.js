@@ -85,7 +85,14 @@ export function normalizePhone(str = '') {
 
 export function detectPlatformFromInput(input = '') {
   const lower = String(input).toLowerCase()
-  if (lower.includes('facebook.com') || lower.includes('fb.com')) return 'facebook'
+  if (
+    lower.includes('facebook.com') ||
+    lower.includes('fb.com') ||
+    lower.includes('fb.watch') ||
+    lower.includes('m.me')
+  ) {
+    return 'facebook'
+  }
   if (lower.includes('zalo.me')) return 'zalo'
   if (lower.includes('tiktok.com')) return 'tiktok'
   if (lower.includes('t.me') || lower.includes('telegram.me')) return 'telegram'

@@ -3,12 +3,14 @@ import { ref, computed } from 'vue'
 import CopyButton from './CopyButton.vue'
 import LightboxModal from './LightboxModal.vue'
 import SocialChannelList from './SocialChannelList.vue'
+import PlatformIcon from './icons/PlatformIcon.vue'
 import { useBanks } from '@/services/banks'
 import { normalizeReportIncidents } from '@/services/repository'
 import { optimizeCloudinaryUrl } from '@/services/cloudinary'
 import {
   formatDateVi,
-  formatCurrencyVi
+  formatCurrencyVi,
+  detectPlatformFromInput
 } from '@/utils/normalize'
 
 const props = defineProps({
@@ -46,6 +48,13 @@ const totalScamAmount = computed(() => {
 function openIncidentLightbox(images, idx) {
   lightboxImages.value = Array.isArray(images) ? images : []
   lightboxIdx.value = idx
+}
+
+function resolveExposePlatform(url) {
+  return (
+    detectPlatformFromInput(url) ||
+    (/^https?:\/\//i.test(String(url || '').trim()) ? 'website' : 'other')
+  )
 }
 
 function resolveBankLogo(b) {
@@ -204,8 +213,9 @@ function matchBadgeLabel(type) {
               :href="url"
               target="_blank"
               rel="noopener noreferrer"
-              class="link"
+              class="link dossier__expose-link"
             >
+              <PlatformIcon :platform="resolveExposePlatform(url)" :size="22" />
               <span>Bài đăng cảnh báo {{ inc.exposeLinks.length > 1 ? lIdx + 1 : '' }}</span>
               <svg viewBox="0 0 14 14" width="12" height="12" fill="none" aria-hidden="true">
                 <path d="M4 10L10 4M10 4H5.2M10 4V8.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
@@ -404,8 +414,14 @@ function matchBadgeLabel(type) {
 .dossier__expose-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 10px 16px;
   font-size: var(--t-small);
+}
+
+.dossier__expose-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
 
 .dossier__incidents {
