@@ -737,6 +737,14 @@ function resolveBadgeStyle(label = '') {
   gap: 8px;
 }
 
+.shop-card__section > .label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--p-ink);
+}
+
 .shop-card__row {
   flex-wrap: wrap;
   gap: 10px 14px;
