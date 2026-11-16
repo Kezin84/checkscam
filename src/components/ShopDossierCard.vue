@@ -383,9 +383,8 @@ function resolveBadgeStyle(label = '') {
       </div>
     </div>
 
-    <div v-if="bankList.length || socialList.length" class="shop-card__col-contact">
     <!-- Official Bank Accounts -->
-    <div v-if="bankList.length" class="shop-card__section">
+    <div v-if="bankList.length" class="shop-card__col-banks shop-card__section">
       <span class="label">Tài khoản ngân hàng chính chủ</span>
       <div class="rows">
         <div v-for="(bank, bIdx) in bankList" :key="bIdx" class="rows__item shop-card__row">
@@ -420,7 +419,7 @@ function resolveBadgeStyle(label = '') {
     </div>
 
     <!-- Official Social Links -->
-    <div v-if="socialList.length" class="shop-card__section">
+    <div v-if="socialList.length" class="shop-card__col-socials shop-card__section">
       <span class="label">Kênh mạng xã hội chính thức</span>
       <div class="rows">
         <div
@@ -515,7 +514,6 @@ function resolveBadgeStyle(label = '') {
         </div>
       </div>
     </div>
-    </div>
 
     <LightboxModal
       :images="lightboxImages"
@@ -597,23 +595,20 @@ function resolveBadgeStyle(label = '') {
   padding-top: 0;
 }
 
-.shop-card__col-menu {
-  padding: 0 var(--s-6);
-}
-
-.shop-card__col-contact {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-5);
+.shop-card__col-menu,
+.shop-card__col-banks,
+.shop-card__col-socials {
   padding: 0 var(--s-6);
 }
 
 .shop-card--in-modal {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr) minmax(0, 1.15fr);
-  gap: var(--s-5);
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr) minmax(0, 1.05fr);
+  grid-template-rows: auto auto;
+  gap: var(--s-4);
   padding: var(--s-5);
   align-items: start;
+  background: var(--p-bg);
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -622,22 +617,37 @@ function resolveBadgeStyle(label = '') {
 }
 
 .shop-card--in-modal.shop-card--no-gallery {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.05fr);
+}
+
+.shop-card--in-modal .shop-card__col-info,
+.shop-card--in-modal .shop-card__col-menu,
+.shop-card--in-modal .shop-card__col-banks,
+.shop-card--in-modal .shop-card__col-socials {
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
 }
 
 .shop-card--in-modal .shop-card__col-info {
-  padding-right: var(--s-5);
-  border-right: 1px solid var(--p-line);
+  grid-column: 1;
+  grid-row: 1;
+  padding: 0 0 var(--s-5);
+  overflow: hidden;
 }
 
 .shop-card--in-modal .shop-card__identity-wrap {
-  padding: 0;
+  padding: var(--s-5) var(--s-5) 0;
+}
+
+.shop-card--in-modal .shop-card__identity-wrap.has-cover {
+  padding-top: 0;
 }
 
 .shop-card--in-modal .shop-card__cover {
   height: 176px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--p-line);
+  border-radius: calc(var(--r-lg) - 1px) calc(var(--r-lg) - 1px) 0 0;
 }
 
 .shop-card--in-modal .shop-card__avatar {
@@ -645,9 +655,14 @@ function resolveBadgeStyle(label = '') {
   height: 72px;
 }
 
+.shop-card--in-modal .shop-card__col-socials {
+  grid-column: 1;
+  grid-row: 2;
+}
+
 .shop-card--in-modal .shop-card__col-menu {
-  padding: 0 var(--s-5) 0 0;
-  border-right: 1px solid var(--p-line);
+  grid-column: 2;
+  grid-row: 1 / span 2;
 }
 
 .shop-card--in-modal .shop-card__gallery {
@@ -662,19 +677,29 @@ function resolveBadgeStyle(label = '') {
   aspect-ratio: 1 / 1;
 }
 
-.shop-card--in-modal .shop-card__col-contact {
-  padding: 0;
+.shop-card--in-modal .shop-card__col-banks {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+}
+
+.shop-card--in-modal.shop-card--no-gallery .shop-card__col-banks {
+  grid-column: 2;
+  grid-row: 1 / span 2;
 }
 
 @media (max-width: 959px) {
   .shop-card--in-modal,
   .shop-card--in-modal.shop-card--no-gallery {
     grid-template-columns: 1fr;
+    grid-template-rows: auto;
   }
   .shop-card--in-modal .shop-card__col-info,
-  .shop-card--in-modal .shop-card__col-menu {
-    padding-right: 0;
-    border-right: none;
+  .shop-card--in-modal .shop-card__col-socials,
+  .shop-card--in-modal .shop-card__col-menu,
+  .shop-card--in-modal .shop-card__col-banks,
+  .shop-card--in-modal.shop-card--no-gallery .shop-card__col-banks {
+    grid-column: 1;
+    grid-row: auto;
   }
 }
 
@@ -720,7 +745,8 @@ function resolveBadgeStyle(label = '') {
     padding: var(--s-5) var(--s-5) 0;
   }
   .shop-card__col-menu,
-  .shop-card__col-contact {
+  .shop-card__col-banks,
+  .shop-card__col-socials {
     padding: 0 var(--s-5);
   }
   .shop-card__identity {
