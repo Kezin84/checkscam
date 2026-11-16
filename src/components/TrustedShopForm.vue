@@ -744,7 +744,7 @@ function handleSubmit() {
     </div>
 
     <div class="shop-preview__stage" :class="{ 'is-mobile': previewViewport === 'mobile' }">
-      <ShopDossierCard :shop="previewShop" />
+      <ShopDossierCard :shop="previewShop" :expandable="false" />
     </div>
   </aside>
   </div>

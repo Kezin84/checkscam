@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import PlatformIcon from './icons/PlatformIcon.vue'
 import CopyButton from './CopyButton.vue'
 import LightboxModal from './LightboxModal.vue'
@@ -19,12 +19,35 @@ const props = defineProps({
   matchInfo: {
     type: Object,
     default: null
+  },
+  expandable: {
+    type: Boolean,
+    default: true
+  },
+  inModal: {
+    type: Boolean,
+    default: false
   }
 })
 
 const { findBank } = useBanks()
+const detailModalOpen = ref(false)
 const lightboxImages = ref([])
 const lightboxIdx = ref(-1)
+
+function handleCardClick(e) {
+  if (!props.expandable || props.inModal) return
+  if (typeof window === 'undefined' || window.innerWidth < 960) return
+  if (e?.target?.closest?.('button, a, [role="link"], [role="menu"], input, select, textarea')) {
+    return
+  }
+  openCopyMenuIdx.value = -1
+  detailModalOpen.value = true
+}
+
+function closeDetailModal() {
+  detailModalOpen.value = false
+}
 
 function openLightbox(images, idx = 0) {
   const valid = (Array.isArray(images) ? images : []).filter(Boolean)
@@ -35,7 +58,17 @@ function openLightbox(images, idx = 0) {
 
 function closeLightbox() {
   lightboxIdx.value = -1
+  if (detailModalOpen.value) {
+    requestAnimationFrame(() => {
+      if (detailModalOpen.value) document.body.style.overflow = 'hidden'
+    })
+  }
 }
+
+watch(detailModalOpen, (isOpen) => {
+  if (props.inModal || typeof document === 'undefined') return
+  document.body.style.overflow = isOpen ? 'hidden' : ''
+})
 
 const bankList = computed(() => {
   return Array.isArray(props.shop.bankAccounts) ? props.shop.bankAccounts : []
@@ -123,8 +156,13 @@ function onGlobalClick() {
 }
 
 function onGlobalKeydown(e) {
-  if (e.key === 'Escape' && openCopyMenuIdx.value !== -1) {
+  if (e.key !== 'Escape') return
+  if (openCopyMenuIdx.value !== -1) {
     openCopyMenuIdx.value = -1
+    return
+  }
+  if (detailModalOpen.value && lightboxIdx.value === -1) {
+    closeDetailModal()
   }
 }
 
@@ -137,6 +175,9 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', onGlobalClick)
   window.removeEventListener('keydown', onGlobalKeydown)
   if (copyResetTimer) clearTimeout(copyResetTimer)
+  if (!props.inModal && detailModalOpen.value && typeof document !== 'undefined') {
+    document.body.style.overflow = ''
+  }
 })
 
 function resolveBadgeStyle(label = '') {
@@ -161,7 +202,14 @@ function resolveBadgeStyle(label = '') {
 </script>
 
 <template>
-  <article class="card shop-card">
+  <article
+    class="card shop-card"
+    :class="{
+      'shop-card--expandable': expandable && !inModal,
+      'shop-card--in-modal': inModal
+    }"
+    @click="handleCardClick"
+  >
     <button
       v-if="shop.coverImage"
       type="button"
@@ -470,6 +518,40 @@ function resolveBadgeStyle(label = '') {
       @close="closeLightbox"
       @change="(i) => (lightboxIdx = i)"
     />
+
+    <Teleport to="body">
+      <div
+        v-if="detailModalOpen && !inModal"
+        class="shop-modal-backdrop"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="`Chi tiết shop ${shop.shopName}`"
+        @click.self="closeDetailModal"
+      >
+        <div class="shop-modal">
+          <div class="shop-modal__bar">
+            <span class="shop-modal__title">Thông tin chi tiết Shop</span>
+            <button
+              type="button"
+              class="shop-modal__close"
+              aria-label="Đóng chi tiết shop"
+              @click="closeDetailModal"
+            >
+              <span>Đóng</span>
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
+                <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              </svg>
+            </button>
+          </div>
+          <ShopDossierCard
+            :shop="shop"
+            :match-info="matchInfo"
+            :expandable="false"
+            in-modal
+          />
+        </div>
+      </div>
+    </Teleport>
   </article>
 </template>
 
@@ -480,6 +562,39 @@ function resolveBadgeStyle(label = '') {
   padding: 0;
   content-visibility: auto;
   contain-intrinsic-size: auto 460px;
+}
+
+@media (min-width: 960px) and (hover: hover) and (pointer: fine) {
+  .shop-card--expandable {
+    cursor: pointer;
+  }
+  .shop-card--expandable:hover {
+    border-color: rgba(13, 116, 128, 0.36);
+    box-shadow: 0 12px 28px rgba(24, 37, 43, 0.08);
+  }
+}
+
+.shop-card--in-modal {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  content-visibility: visible;
+  contain-intrinsic-size: auto;
+}
+
+.shop-card--in-modal .shop-card__cover {
+  height: 248px;
+  border-radius: 0;
+}
+
+.shop-card--in-modal .shop-card__avatar {
+  width: 88px;
+  height: 88px;
+}
+
+.shop-card--in-modal .shop-card__thumb {
+  width: 84px;
+  height: 84px;
 }
 
 .shop-card__cover {
@@ -932,5 +1047,68 @@ function resolveBadgeStyle(label = '') {
   .shop-card__row--clickable:hover .shop-card__row-arrow {
     color: var(--p-accent);
   }
+}
+
+.shop-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 75;
+  background: rgba(16, 25, 29, 0.72);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.shop-modal {
+  width: min(760px, 100%);
+  max-height: calc(100svh - 48px);
+  overflow-y: auto;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(16, 25, 29, 0.28);
+}
+
+.shop-modal__bar {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--p-line);
+}
+
+.shop-modal__title {
+  font-size: var(--t-small);
+  font-weight: 600;
+  color: var(--p-ink);
+}
+
+.shop-modal__close {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--p-line);
+  background: var(--p-surface);
+  color: var(--p-ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 140ms var(--ease), border-color 140ms var(--ease);
+}
+
+.shop-modal__close:hover {
+  background: var(--p-card);
+  border-color: var(--p-ink);
 }
 </style>
