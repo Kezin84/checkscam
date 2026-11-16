@@ -207,7 +207,8 @@ function resolveBadgeStyle(label = '') {
     :class="{
       'shop-card--expandable': expandable && !inModal,
       'shop-card--in-modal': inModal,
-      'shop-card--no-gallery': galleryList.length === 0
+      'shop-card--no-gallery': galleryList.length === 0,
+      'shop-card--no-socials': socialList.length === 0
     }"
     @click="handleCardClick"
   >
@@ -533,7 +534,30 @@ function resolveBadgeStyle(label = '') {
       >
         <div class="shop-modal" :class="{ 'shop-modal--no-gallery': galleryList.length === 0 }">
           <div class="shop-modal__bar">
-            <span class="shop-modal__title">Thông tin chi tiết Shop</span>
+            <div class="shop-modal__head-info">
+              <span class="shop-modal__title">{{ shop.shopName }}</span>
+              <span
+                v-if="isVerified"
+                class="shop-card__fb-tick"
+                title="Shop đã xác minh"
+                aria-label="Shop đã xác minh"
+              >
+                <svg viewBox="0 0 20 20" width="18" height="18" fill="none" aria-hidden="true">
+                  <path
+                    d="M10 1.4L12.3 2.8L14.9 2.6L16.1 5L18.4 6.3L18.1 8.9L19.4 11.2L17.6 13.1L17.4 15.7L14.9 16.5L13.3 18.6L10.7 17.9L8.3 19.1L6.3 17.3L3.7 17.2L3 14.7L1 13L1.8 10.5L0.9 8L2.9 6.3L3.4 3.7L6 3.3L7.8 1.5L10 1.4Z"
+                    fill="#1877F2"
+                  />
+                  <path
+                    d="M6.7 10.3L8.9 12.5L13.6 7.7"
+                    stroke="#ffffff"
+                    stroke-width="2.1"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span v-if="shop.category" class="shop-modal__cat">{{ shop.category }}</span>
+            </div>
             <button
               type="button"
               class="shop-modal__close"
@@ -604,11 +628,12 @@ function resolveBadgeStyle(label = '') {
 .shop-card--in-modal {
   display: grid;
   grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr) minmax(0, 1.05fr);
-  grid-template-rows: auto auto;
-  gap: var(--s-4);
+  grid-template-rows: auto 1fr;
+  column-gap: var(--s-4);
+  row-gap: 0;
   padding: var(--s-5);
-  align-items: start;
-  background: var(--p-bg);
+  align-items: stretch;
+  background: #f3f6f8;
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -625,16 +650,24 @@ function resolveBadgeStyle(label = '') {
 .shop-card--in-modal .shop-card__col-banks,
 .shop-card--in-modal .shop-card__col-socials {
   background: var(--p-card);
-  border: 1px solid var(--p-line);
-  border-radius: var(--r-lg);
-  padding: var(--s-5);
+  border: 1px solid rgba(31, 48, 56, 0.11);
+  box-shadow: 0 2px 10px rgba(24, 37, 43, 0.04);
 }
 
 .shop-card--in-modal .shop-card__col-info {
   grid-column: 1;
   grid-row: 1;
   padding: 0 0 var(--s-5);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
   overflow: hidden;
+}
+
+.shop-card--in-modal.shop-card--no-socials .shop-card__col-info {
+  grid-row: 1 / span 2;
+  height: 100%;
+  border-bottom: 1px solid rgba(31, 48, 56, 0.11);
+  border-radius: 12px;
 }
 
 .shop-card--in-modal .shop-card__identity-wrap {
@@ -646,23 +679,31 @@ function resolveBadgeStyle(label = '') {
 }
 
 .shop-card--in-modal .shop-card__cover {
-  height: 176px;
-  border-radius: calc(var(--r-lg) - 1px) calc(var(--r-lg) - 1px) 0 0;
+  height: 168px;
+  border-radius: 11px 11px 0 0;
 }
 
 .shop-card--in-modal .shop-card__avatar {
-  width: 72px;
-  height: 72px;
+  width: 68px;
+  height: 68px;
 }
 
 .shop-card--in-modal .shop-card__col-socials {
   grid-column: 1;
   grid-row: 2;
+  height: 100%;
+  padding: var(--s-4) var(--s-5) var(--s-5);
+  border-top: 1px solid var(--p-line);
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 4px 10px -4px rgba(24, 37, 43, 0.05);
 }
 
 .shop-card--in-modal .shop-card__col-menu {
   grid-column: 2;
   grid-row: 1 / span 2;
+  height: 100%;
+  padding: var(--s-5);
+  border-radius: 12px;
 }
 
 .shop-card--in-modal .shop-card__gallery {
@@ -680,6 +721,15 @@ function resolveBadgeStyle(label = '') {
 .shop-card--in-modal .shop-card__col-banks {
   grid-column: 3;
   grid-row: 1 / span 2;
+  height: 100%;
+  padding: var(--s-5);
+  border-radius: 12px;
+}
+
+.shop-card--in-modal .shop-card__guardrail {
+  margin-top: auto;
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--p-line);
 }
 
 .shop-card--in-modal.shop-card--no-gallery .shop-card__col-banks {
@@ -692,6 +742,7 @@ function resolveBadgeStyle(label = '') {
   .shop-card--in-modal.shop-card--no-gallery {
     grid-template-columns: 1fr;
     grid-template-rows: auto;
+    row-gap: var(--s-4);
   }
   .shop-card--in-modal .shop-card__col-info,
   .shop-card--in-modal .shop-card__col-socials,
@@ -700,6 +751,9 @@ function resolveBadgeStyle(label = '') {
   .shop-card--in-modal.shop-card--no-gallery .shop-card__col-banks {
     grid-column: 1;
     grid-row: auto;
+    height: auto;
+    border-radius: 12px;
+    border: 1px solid rgba(31, 48, 56, 0.11);
   }
 }
 
@@ -1165,13 +1219,13 @@ function resolveBadgeStyle(label = '') {
 }
 
 .shop-modal {
-  width: min(1160px, 100%);
+  width: min(1180px, 100%);
   max-height: calc(100svh - 48px);
   overflow-y: auto;
-  background: var(--p-card);
-  border: 1px solid var(--p-line);
-  border-radius: 14px;
-  box-shadow: 0 24px 64px rgba(16, 25, 29, 0.28);
+  background: #f3f6f8;
+  border: 1px solid rgba(31, 48, 56, 0.14);
+  border-radius: 16px;
+  box-shadow: 0 28px 72px rgba(16, 25, 29, 0.32);
 }
 
 .shop-modal--no-gallery {
@@ -1186,16 +1240,36 @@ function resolveBadgeStyle(label = '') {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 20px;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(6px);
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--p-line);
 }
 
+.shop-modal__head-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .shop-modal__title {
-  font-size: var(--t-small);
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--p-ink);
+}
+
+.shop-modal__cat {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--p-accent-soft);
+  border: 1px solid rgba(13, 116, 128, 0.2);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--p-accent);
 }
 
 .shop-modal__close {
