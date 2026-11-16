@@ -176,9 +176,8 @@ function resolveBadgeStyle(label = '') {
         loading="lazy"
       />
     </button>
-    <div v-else class="shop-card__cover shop-card__cover--fallback" aria-hidden="true"></div>
 
-    <div class="shop-card__body">
+    <div class="shop-card__body" :class="{ 'shop-card__body--with-cover': Boolean(shop.coverImage) }">
       <div class="shop-card__identity">
         <button
           v-if="shop.avatar"
@@ -486,7 +485,6 @@ function resolveBadgeStyle(label = '') {
 .shop-card__cover {
   display: block;
   width: 100%;
-  height: 152px;
   padding: 0;
   border: none;
   border-bottom: 1px solid var(--p-line);
@@ -500,59 +498,57 @@ function resolveBadgeStyle(label = '') {
 }
 
 .shop-card__cover img {
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  max-height: 360px;
+  object-fit: contain;
   transition: transform var(--m-image-out) var(--ease);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .shop-card__cover--btn:hover img {
-    transform: scale(1.02);
+    transform: scale(1.015);
     transition-duration: var(--m-image);
   }
-}
-
-.shop-card__cover--fallback {
-  height: 92px;
-  background: linear-gradient(135deg, #dff0f3 0%, #ecf2f5 55%, #e2ecef 100%);
 }
 
 .shop-card__body {
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
-  padding: 0 var(--s-6) var(--s-6);
+  padding: var(--s-6);
+}
+
+.shop-card__body--with-cover {
+  padding-top: var(--s-5);
 }
 
 .shop-card__identity {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 10px;
-  margin-top: -46px;
+  flex-direction: row;
+  align-items: flex-start;
+  text-align: left;
+  gap: 14px;
 }
 
 .shop-card__avatar {
-  position: relative;
-  z-index: 1;
-  width: 92px;
-  height: 92px;
+  width: 76px;
+  height: 76px;
   padding: 0;
   border-radius: 50%;
-  border: 4px solid var(--p-card);
+  border: 2px solid var(--p-line);
   background: var(--p-surface);
   color: var(--p-ink);
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 0 4px 14px rgba(24, 37, 43, 0.14);
+  box-shadow: 0 2px 8px rgba(24, 37, 43, 0.08);
 }
 
 .shop-card__avatar--btn {
@@ -561,8 +557,8 @@ function resolveBadgeStyle(label = '') {
 }
 
 .shop-card__avatar--btn:hover {
-  border-color: var(--p-card);
-  box-shadow: 0 6px 18px rgba(13, 116, 128, 0.24);
+  border-color: var(--p-accent);
+  box-shadow: 0 4px 14px rgba(13, 116, 128, 0.2);
 }
 
 .shop-card__avatar img {
@@ -574,17 +570,17 @@ function resolveBadgeStyle(label = '') {
 .shop-card__title-wrap {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 5px;
+  align-items: flex-start;
+  gap: 4px;
+  flex: 1;
   min-width: 0;
-  width: 100%;
 }
 
 .shop-card__name-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 7px;
 }
 
@@ -621,28 +617,25 @@ function resolveBadgeStyle(label = '') {
 .shop-card__tags {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 6px;
   margin-top: 4px;
 }
 
 @media (max-width: 639px) {
-  .shop-card__cover {
-    height: 128px;
-  }
-  .shop-card__cover--fallback {
-    height: 80px;
+  .shop-card__cover img {
+    max-height: 260px;
   }
   .shop-card__body {
-    padding: 0 var(--s-5) var(--s-5);
+    padding: var(--s-5);
   }
   .shop-card__identity {
-    margin-top: -40px;
+    gap: 12px;
   }
   .shop-card__avatar {
-    width: 80px;
-    height: 80px;
-    font-size: 20px;
+    width: 64px;
+    height: 64px;
+    font-size: 18px;
   }
 }
 
