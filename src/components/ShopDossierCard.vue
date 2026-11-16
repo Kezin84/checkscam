@@ -206,27 +206,29 @@ function resolveBadgeStyle(label = '') {
     class="card shop-card"
     :class="{
       'shop-card--expandable': expandable && !inModal,
-      'shop-card--in-modal': inModal
+      'shop-card--in-modal': inModal,
+      'shop-card--no-gallery': galleryList.length === 0
     }"
     @click="handleCardClick"
   >
-    <button
-      v-if="shop.coverImage"
-      type="button"
-      class="shop-card__cover shop-card__cover--btn"
-      :aria-label="`Xem ảnh bìa của ${shop.shopName}`"
-      @click="openLightbox([shop.coverImage], 0)"
-    >
-      <img
-        :src="optimizeCloudinaryUrl(shop.coverImage, 960)"
-        :alt="`Ảnh bìa ${shop.shopName}`"
-        :style="{ objectPosition: shop.coverPosition || '50% 50%' }"
-        loading="lazy"
-      />
-    </button>
+    <div class="shop-card__col-info">
+      <button
+        v-if="shop.coverImage"
+        type="button"
+        class="shop-card__cover shop-card__cover--btn"
+        :aria-label="`Xem ảnh bìa của ${shop.shopName}`"
+        @click="openLightbox([shop.coverImage], 0)"
+      >
+        <img
+          :src="optimizeCloudinaryUrl(shop.coverImage, 960)"
+          :alt="`Ảnh bìa ${shop.shopName}`"
+          :style="{ objectPosition: shop.coverPosition || '50% 50%' }"
+          loading="lazy"
+        />
+      </button>
 
-    <div class="shop-card__body" :class="{ 'shop-card__body--with-cover': Boolean(shop.coverImage) }">
-      <div class="shop-card__identity">
+      <div class="shop-card__identity-wrap" :class="{ 'has-cover': Boolean(shop.coverImage) }">
+        <div class="shop-card__identity">
         <button
           v-if="shop.avatar"
           type="button"
@@ -355,7 +357,13 @@ function resolveBadgeStyle(label = '') {
       </div>
     </div>
 
-    <div v-if="galleryList.length" class="shop-card__section">
+      <p v-if="shop.description" class="shop-card__desc">
+        {{ shop.description }}
+      </p>
+      </div>
+    </div>
+
+    <div v-if="galleryList.length" class="shop-card__col-menu shop-card__section">
       <span class="label">Hình ảnh / Menu quán ({{ galleryList.length }})</span>
       <div class="shop-card__gallery">
         <button
@@ -375,10 +383,7 @@ function resolveBadgeStyle(label = '') {
       </div>
     </div>
 
-    <p v-if="shop.description" class="shop-card__desc">
-      {{ shop.description }}
-    </p>
-
+    <div v-if="bankList.length || socialList.length" class="shop-card__col-contact">
     <!-- Official Bank Accounts -->
     <div v-if="bankList.length" class="shop-card__section">
       <span class="label">Tài khoản ngân hàng chính chủ</span>
@@ -528,7 +533,7 @@ function resolveBadgeStyle(label = '') {
         :aria-label="`Chi tiết shop ${shop.shopName}`"
         @click.self="closeDetailModal"
       >
-        <div class="shop-modal">
+        <div class="shop-modal" :class="{ 'shop-modal--no-gallery': galleryList.length === 0 }">
           <div class="shop-modal__bar">
             <span class="shop-modal__title">Thông tin chi tiết Shop</span>
             <button
@@ -559,7 +564,8 @@ function resolveBadgeStyle(label = '') {
 .shop-card {
   display: flex;
   flex-direction: column;
-  padding: 0;
+  gap: var(--s-5);
+  padding: 0 0 var(--s-6);
   content-visibility: auto;
   contain-intrinsic-size: auto 460px;
 }
@@ -574,7 +580,40 @@ function resolveBadgeStyle(label = '') {
   }
 }
 
+.shop-card__col-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.shop-card__identity-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-6) var(--s-6) 0;
+}
+
+.shop-card__identity-wrap.has-cover {
+  padding-top: 0;
+}
+
+.shop-card__col-menu {
+  padding: 0 var(--s-6);
+}
+
+.shop-card__col-contact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  padding: 0 var(--s-6);
+}
+
 .shop-card--in-modal {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr) minmax(0, 1.15fr);
+  gap: var(--s-5);
+  padding: var(--s-5);
+  align-items: start;
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -582,19 +621,61 @@ function resolveBadgeStyle(label = '') {
   contain-intrinsic-size: auto;
 }
 
+.shop-card--in-modal.shop-card--no-gallery {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+}
+
+.shop-card--in-modal .shop-card__col-info {
+  padding-right: var(--s-5);
+  border-right: 1px solid var(--p-line);
+}
+
+.shop-card--in-modal .shop-card__identity-wrap {
+  padding: 0;
+}
+
 .shop-card--in-modal .shop-card__cover {
-  height: 248px;
-  border-radius: 0;
+  height: 176px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--p-line);
 }
 
 .shop-card--in-modal .shop-card__avatar {
-  width: 88px;
-  height: 88px;
+  width: 72px;
+  height: 72px;
+}
+
+.shop-card--in-modal .shop-card__col-menu {
+  padding: 0 var(--s-5) 0 0;
+  border-right: 1px solid var(--p-line);
+}
+
+.shop-card--in-modal .shop-card__gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .shop-card--in-modal .shop-card__thumb {
-  width: 84px;
-  height: 84px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+
+.shop-card--in-modal .shop-card__col-contact {
+  padding: 0;
+}
+
+@media (max-width: 959px) {
+  .shop-card--in-modal,
+  .shop-card--in-modal.shop-card--no-gallery {
+    grid-template-columns: 1fr;
+  }
+  .shop-card--in-modal .shop-card__col-info,
+  .shop-card--in-modal .shop-card__col-menu {
+    padding-right: 0;
+    border-right: none;
+  }
 }
 
 .shop-card__cover {
@@ -628,15 +709,28 @@ function resolveBadgeStyle(label = '') {
   }
 }
 
-.shop-card__body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-5);
-  padding: var(--s-6);
-}
-
-.shop-card__body--with-cover {
-  padding-top: var(--s-5);
+@media (max-width: 639px) {
+  .shop-card {
+    padding: 0 0 var(--s-5);
+  }
+  .shop-card__cover {
+    height: 144px;
+  }
+  .shop-card__identity-wrap {
+    padding: var(--s-5) var(--s-5) 0;
+  }
+  .shop-card__col-menu,
+  .shop-card__col-contact {
+    padding: 0 var(--s-5);
+  }
+  .shop-card__identity {
+    gap: 12px;
+  }
+  .shop-card__avatar {
+    width: 64px;
+    height: 64px;
+    font-size: 18px;
+  }
 }
 
 .shop-card__identity {
@@ -735,23 +829,6 @@ function resolveBadgeStyle(label = '') {
   justify-content: flex-start;
   gap: 6px;
   margin-top: 4px;
-}
-
-@media (max-width: 639px) {
-  .shop-card__cover {
-    height: 144px;
-  }
-  .shop-card__body {
-    padding: var(--s-5);
-  }
-  .shop-card__identity {
-    gap: 12px;
-  }
-  .shop-card__avatar {
-    width: 64px;
-    height: 64px;
-    font-size: 18px;
-  }
 }
 
 .shop-card__tag {
@@ -1062,13 +1139,17 @@ function resolveBadgeStyle(label = '') {
 }
 
 .shop-modal {
-  width: min(760px, 100%);
+  width: min(1160px, 100%);
   max-height: calc(100svh - 48px);
   overflow-y: auto;
   background: var(--p-card);
   border: 1px solid var(--p-line);
   border-radius: 14px;
   box-shadow: 0 24px 64px rgba(16, 25, 29, 0.28);
+}
+
+.shop-modal--no-gallery {
+  width: min(860px, 100%);
 }
 
 .shop-modal__bar {
