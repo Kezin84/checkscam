@@ -444,7 +444,7 @@ function handleSubmit() {
         <EvidenceUploader
           v-model="form.avatarList"
           single
-          button-label="Tải lên ảnh đại diện của shop"
+          button-label="Tải lên hoặc dán ảnh đại diện của shop"
           @uploading="(state) => (avatarUploading = state)"
         />
         <div v-if="form.avatarList.length" class="pos-control">
@@ -481,7 +481,7 @@ function handleSubmit() {
         <EvidenceUploader
           v-model="form.coverList"
           single
-          button-label="Tải lên ảnh bìa ngang cho đầu card shop"
+          button-label="Tải lên hoặc dán ảnh bìa ngang cho đầu card shop"
           @uploading="(state) => (coverUploading = state)"
         />
         <div v-if="form.coverList.length" class="pos-control">
@@ -518,7 +518,7 @@ function handleSubmit() {
         <EvidenceUploader
           v-model="form.galleryImages"
           :max-files="8"
-          button-label="Tải lên ảnh menu hoặc sản phẩm của shop"
+          button-label="Tải lên hoặc dán ảnh menu / sản phẩm của shop"
           @uploading="(state) => (galleryUploading = state)"
         />
       </div>

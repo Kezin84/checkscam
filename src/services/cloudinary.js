@@ -1,7 +1,14 @@
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dsmtq5rbh'
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'checkscam_unsigned'
 
-const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp']
+const ALLOWED_MIME = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/bmp',
+  'image/avif'
+]
 const MAX_FILE_BYTES = 10 * 1024 * 1024 // 10MB
 const MAX_UPLOAD_DIMENSION = 1600
 const JPEG_QUALITY = 0.86
@@ -85,7 +92,7 @@ export function uploadImageToCloudinary(file, onProgress) {
       return
     }
     if (file.type && !ALLOWED_MIME.includes(file.type)) {
-      reject(new Error('Chỉ chấp nhận định dạng ảnh JPG, PNG hoặc WebP.'))
+      reject(new Error('Chỉ chấp nhận tệp hình ảnh hợp lệ (JPG, PNG, WebP, GIF, BMP, AVIF).'))
       return
     }
     if (file.size > MAX_FILE_BYTES) {
