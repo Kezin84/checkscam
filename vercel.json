@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/((?!api/|_vercel/|assets/|favicon\\.svg|logo\\.jpg).*)",
+      "source": "/((?!api/|_vercel/|assets/|\\.well-known/|.*\\.[a-zA-Z0-9]{1,8}$).*)",
       "destination": "/index.html"
     }
   ]

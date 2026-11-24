@@ -254,7 +254,9 @@ export default {
       if (assetRes.status !== 404) {
         return assetRes
       }
-      if (request.method === 'GET' || request.method === 'HEAD') {
+      const hasFileExtension = /\/[^/]+\.[a-z0-9]{1,8}$/i.test(url.pathname)
+      const isWellKnown = url.pathname.startsWith('/.well-known/')
+      if ((request.method === 'GET' || request.method === 'HEAD') && !hasFileExtension && !isWellKnown) {
         return env.ASSETS.fetch(new URL('/index.html', url.origin))
       }
       return assetRes
