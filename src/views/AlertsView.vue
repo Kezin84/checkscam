@@ -49,22 +49,20 @@ watch(
   { immediate: true }
 )
 
+const PUBLIC_RECENT_LIMIT = 10
+
 const {
   items: visibleReports,
   loading,
-  loadingMore,
   searching,
-  hasMore,
   keyword,
-  sentinelRef,
-  loadNextPage,
   triggerSearchNow
 } = useServerFeed({
   cacheKey: 'alerts',
-  batchSize: 6,
+  batchSize: PUBLIC_RECENT_LIMIT,
   filterRef: activePlatform,
-  fetchPage: ({ batchSize, cursorKey, filter }) =>
-    fetchReportsPage({ batchSize, cursorKey, platform: filter }),
+  fetchPage: ({ batchSize, filter }) =>
+    fetchReportsPage({ batchSize, cursorKey: null, platform: filter, probeMore: false }),
   searchFn: async (q, filter) => {
     const res = await searchRecordsOnServer(q, {
       includeReports: true,
@@ -172,15 +170,17 @@ const feedReports = computed(() => {
           <ReportDossierCard v-for="rep in feedReports" :key="rep.id" :report="rep" />
         </div>
 
-        <div v-if="hasMore" ref="sentinelRef" class="lazy-more">
-          <button
-            type="button"
-            class="btn btn--secondary btn--sm"
-            :disabled="loadingMore"
-            @click="loadNextPage"
-          >
-            {{ loadingMore ? 'Đang tải thêm...' : 'Hiển thị thêm danh sách lừa đảo' }}
-          </button>
+        <div
+          v-if="!keyword.trim() && siteMeta.reportsCount > visibleReports.length"
+          class="card archive-guard-note"
+        >
+          <strong>
+            Đang hiển thị {{ visibleReports.length }} cảnh báo mới nhất trên tổng số {{ siteMeta.reportsCount }} hồ sơ đã kiểm duyệt.
+          </strong>
+          <p class="muted">
+            Để bảo vệ dữ liệu hệ thống chống sao chép hàng loạt, các hồ sơ cũ hơn chỉ hiển thị khi bạn nhập chính xác
+            <strong>Số tài khoản, ví GCash, SĐT, @username hoặc Link MXH</strong> vào ô tra cứu phía trên.
+          </p>
         </div>
       </template>
 
@@ -333,10 +333,28 @@ const feedReports = computed(() => {
   width: 45%;
 }
 
-.lazy-more {
+.archive-guard-note {
+  margin-top: var(--s-6);
+  padding: 18px 22px;
   display: flex;
-  justify-content: center;
-  padding-top: var(--s-6);
+  flex-direction: column;
+  gap: 6px;
+  background: var(--p-surface);
+  border-color: var(--p-line-strong);
+}
+
+.archive-guard-note strong {
+  font-size: var(--t-body);
+  font-weight: 500;
+  color: var(--p-ink);
+}
+
+.archive-guard-note p {
+  font-size: var(--t-small);
+}
+
+.archive-guard-note p strong {
+  font-size: inherit;
 }
 
 .status-box {

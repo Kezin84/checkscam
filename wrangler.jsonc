@@ -1,0 +1,9 @@
+{
+  "name": "checkscam",
+  "compatibility_date": "2025-02-01",
+  "main": "cloudflare-worker.js",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  }
+}

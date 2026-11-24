@@ -232,42 +232,56 @@ async function handleDeleteShop(shop) {
 
 const securityRulesJson = computed(() => {
   const email = currentUser.value?.email || ''
+  const isAdm = `auth != null && auth.token.email_verified === true && auth.token.email === '${email}'`
   return `{
   "rules": {
     "trusted_shops": {
-      ".read": true,
-      ".write": "auth != null && auth.token.email === '${email}'"
+      ".read": "(${isAdm}) || (query.orderByKey && query.limitToLast <= 20)",
+      ".write": "${isAdm}",
+      "$shopId": {
+        ".read": true
+      }
     },
     "scam_reports": {
-      ".read": true,
-      ".write": "auth != null && auth.token.email === '${email}'"
+      ".read": "(${isAdm}) || (query.orderByKey && query.limitToLast <= 12 && query.startAt == null && query.endAt == null)",
+      ".write": "${isAdm}",
+      "$reportId": {
+        ".read": true
+      }
     },
     "lookup_index": {
-      ".read": true,
-      ".write": "auth != null && auth.token.email === '${email}'"
+      ".read": "(${isAdm}) || (query.orderByKey && query.limitToFirst <= 15 && query.startAt != null && query.endAt != null)",
+      ".write": "${isAdm}",
+      "$token": {
+        ".read": true
+      }
     },
     "cat_index": {
-      ".read": true,
-      ".write": "auth != null && auth.token.email === '${email}'"
+      ".write": "${isAdm}",
+      "$catKey": {
+        ".read": "(${isAdm}) || (query.orderByKey && query.limitToLast <= 20)"
+      }
     },
     "plat_index": {
-      ".read": true,
-      ".write": "auth != null && auth.token.email === '${email}'"
+      ".write": "${isAdm}",
+      "$platKey": {
+        ".read": "(${isAdm}) || (query.orderByKey && query.limitToLast <= 12 && query.startAt == null && query.endAt == null)"
+      }
     },
     "site_meta": {
       ".read": true,
-      ".write": "auth != null && auth.token.email === '${email}'"
+      ".write": "${isAdm}"
     },
     "pending_reports": {
-      ".read": "auth != null && auth.token.email === '${email}'",
+      ".read": "${isAdm}",
       "$submissionId": {
-        ".write": "!data.exists() || (auth != null && auth.token.email === '${email}')",
+        ".write": "!data.exists() || (${isAdm})",
         ".validate": "newData.hasChildren(['subjectName', 'scamType', 'createdAt']) || !newData.exists()"
       }
     },
     "reporter_archive": {
-      ".read": "auth != null && auth.token.email === '${email}'",
-      ".write": "auth != null && auth.token.email === '${email}'"
+      ".read": "${isAdm}",
+      ".write": "${isAdm}"
     }
   }
 }`

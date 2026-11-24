@@ -130,13 +130,20 @@ export function fetchShopById(id) {
 }
 
 // Paginated server fetch for /alerts and Admin reports tab
-export async function fetchReportsPage({ batchSize = 6, cursorKey = null, platform = 'all' } = {}) {
+export async function fetchReportsPage({
+  batchSize = 6,
+  cursorKey = null,
+  platform = 'all',
+  probeMore = true
+} = {}) {
+  const fetchLimit = probeMore ? batchSize + 1 : batchSize
+
   if (platform && platform !== 'all') {
     const platKey = toSafeIndexKey(platform)
     const constraints = [
       orderByKey(),
       ...(cursorKey ? [endBefore(cursorKey)] : []),
-      limitToLast(batchSize + 1)
+      limitToLast(fetchLimit)
     ]
     const idxSnap = await get(query(dbRef(db, `plat_index/${platKey}`), ...constraints))
     const ascKeys = []
@@ -144,7 +151,7 @@ export async function fetchReportsPage({ batchSize = 6, cursorKey = null, platfo
       if (child.val()) ascKeys.push(child.key)
     })
     const descKeys = ascKeys.reverse()
-    const hasMore = descKeys.length > batchSize
+    const hasMore = probeMore && descKeys.length > batchSize
     const pageKeys = hasMore ? descKeys.slice(0, batchSize) : descKeys
     const nextCursor = hasMore && pageKeys.length ? pageKeys[pageKeys.length - 1] : null
 
@@ -159,11 +166,11 @@ export async function fetchReportsPage({ batchSize = 6, cursorKey = null, platfo
   const constraints = [
     orderByKey(),
     ...(cursorKey ? [endBefore(cursorKey)] : []),
-    limitToLast(batchSize + 1)
+    limitToLast(fetchLimit)
   ]
   const snap = await get(query(dbRef(db, 'scam_reports'), ...constraints))
   const desc = orderedSnapToDescList(snap)
-  const hasMore = desc.length > batchSize
+  const hasMore = probeMore && desc.length > batchSize
   const items = hasMore ? desc.slice(0, batchSize) : desc
   const nextCursor = hasMore && items.length ? items[items.length - 1].id : null
 

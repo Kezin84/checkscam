@@ -1,39 +1,52 @@
 {
   "rules": {
     "trusted_shops": {
-      ".read": true,
-      ".write": "auth != null && auth.token.email === 'quangdang080420022@gmail.com'"
+      ".read": "(auth != null && auth.token.email_verified === true && auth.token.email === 'quangdang080420022@gmail.com') || (query.orderByKey && query.limitToLast <= 20)",
+      ".write": "auth != null && auth.token.email_verified === true && auth.token.email === 'quangdang080420022@gmail.com'",
+      "$shopId": {
+        ".read": true
+      }
     },
     "scam_reports": {
-      ".read": true,
-      ".write": "auth != null && auth.token.email === 'quangdang080420022@gmail.com'"
+      ".read": "(auth != null && auth.token.email_verified === true && auth.token.email === 'quangdang080420022@gmail.com') || (query.orderByKey && query.limitToLast <= 12 && query.startAt == null && query.endAt == null)",
+      ".write": "auth != null && auth.token.email_verified === true && auth.token.email === 'quangdang080420022@gmail.com'",
+      "$reportId": {
+        ".read": true
+      }
     },
     "lookup_index": {
-      ".read": true,
-      ".write": "auth != null && auth.token.email === 'quangdang080420022@gmail.com'"
+      ".read": "(auth != null && auth.token.email_verified === true && auth.token.email === 'quangdang080420022@gmail.com') || (query.orderByKey && query.limitToFirst <= 15 && query.startAt != null && query.endAt != null)",
+      ".write": "auth != null && auth.token.email_verified === true && auth.token.email === 'quangdang080420022@gmail.com'",
+      "$token": {
+        ".read": true
+      }
     },
     "cat_index": {
-      ".read": true,
-      ".write": "auth != null && auth.token.email === 'quangdang080420022@gmail.com'"
+      ".write": "auth != null && auth.token.email_verified === true && auth.token.email === 'quangdang080420022@gmail.com'",
+      "$catKey": {
+        ".read": "(auth != null && auth.token.email_verified === true && auth.token.email === 'quangdang080420022@gmail.com') || (query.orderByKey && query.limitToLast <= 20)"
+      }
     },
     "plat_index": {
-      ".read": true,
-      ".write": "auth != null && auth.token.email === 'quangdang080420022@gmail.com'"
+      ".write": "auth != null && auth.token.email_verified === true && auth.token.email === 'quangdang080420022@gmail.com'",
+      "$platKey": {
+        ".read": "(auth != null && auth.token.email_verified === true && auth.token.email === 'quangdang080420022@gmail.com') || (query.orderByKey && query.limitToLast <= 12 && query.startAt == null && query.endAt == null)"
+      }
     },
     "site_meta": {
       ".read": true,
-      ".write": "auth != null && auth.token.email === 'quangdang080420022@gmail.com'"
+      ".write": "auth != null && auth.token.email_verified === true && auth.token.email === 'quangdang080420022@gmail.com'"
     },
     "pending_reports": {
-      ".read": "auth != null && auth.token.email === 'quangdang080420022@gmail.com'",
+      ".read": "auth != null && auth.token.email_verified === true && auth.token.email === 'quangdang080420022@gmail.com'",
       "$submissionId": {
-        ".write": "!data.exists() || (auth != null && auth.token.email === 'quangdang080420022@gmail.com')",
+        ".write": "!data.exists() || (auth != null && auth.token.email_verified === true && auth.token.email === 'quangdang080420022@gmail.com')",
         ".validate": "newData.hasChildren(['subjectName', 'scamType', 'createdAt']) || !newData.exists()"
       }
     },
     "reporter_archive": {
-      ".read": "auth != null && auth.token.email === 'quangdang080420022@gmail.com'",
-      ".write": "auth != null && auth.token.email === 'quangdang080420022@gmail.com'"
+      ".read": "auth != null && auth.token.email_verified === true && auth.token.email === 'quangdang080420022@gmail.com'",
+      ".write": "auth != null && auth.token.email_verified === true && auth.token.email === 'quangdang080420022@gmail.com'"
     }
   }
 }
