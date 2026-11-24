@@ -1,8 +1,10 @@
 <script setup>
-import { ref, defineAsyncComponent } from 'vue'
+import { ref, computed, watch, defineAsyncComponent } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   useRepository,
   fetchReportsPage,
+  fetchReportById,
   searchRecordsOnServer
 } from '@/services/repository'
 import PlatformSelect from '@/components/PlatformSelect.vue'
@@ -10,8 +12,42 @@ import { useServerFeed } from '@/composables/useServerFeed'
 
 const ReportDossierCard = defineAsyncComponent(() => import('@/components/ReportDossierCard.vue'))
 
+const route = useRoute()
+const router = useRouter()
 const { siteMeta } = useRepository()
 const activePlatform = ref('all')
+
+const sharedId = computed(() => String(route.params.id || route.query.id || '').trim())
+const sharedReport = ref(null)
+const sharedLoading = ref(false)
+let sharedReqId = 0
+
+watch(
+  sharedId,
+  async (id) => {
+    const reqId = ++sharedReqId
+    if (!id) {
+      sharedReport.value = null
+      sharedLoading.value = false
+      if (typeof document !== 'undefined') {
+        document.title = 'Danh sách lừa đảo cộng đồng Việt tại Philippines — CHECK LỪA ĐẢO'
+      }
+      return
+    }
+    sharedLoading.value = true
+    try {
+      const found = await fetchReportById(id)
+      if (reqId !== sharedReqId) return
+      sharedReport.value = found
+      if (found?.subjectName && typeof document !== 'undefined') {
+        document.title = `Cảnh báo: ${found.subjectName} — CHECK LỪA ĐẢO`
+      }
+    } finally {
+      if (reqId === sharedReqId) sharedLoading.value = false
+    }
+  },
+  { immediate: true }
+)
 
 const {
   items: visibleReports,
@@ -38,15 +74,49 @@ const {
     return res.reports.map((entry) => entry.item)
   }
 })
+
+const feedReports = computed(() => {
+  if (!sharedReport.value?.id) return visibleReports.value
+  return visibleReports.value.filter((rep) => rep.id !== sharedReport.value.id)
+})
 </script>
 
 <template>
   <section class="section page-section">
     <div class="wrap">
+      <!-- Shared Report Spotlight (when opened via /alerts/:id) -->
+      <div v-if="sharedId" class="shared-spotlight">
+        <div class="shared-spotlight__bar">
+          <span class="stamp stamp--danger">Hồ sơ cảnh báo được chia sẻ</span>
+          <button
+            type="button"
+            class="btn btn--secondary btn--sm"
+            @click="router.push('/alerts')"
+          >
+            Xem toàn bộ danh sách
+          </button>
+        </div>
+
+        <div v-if="sharedLoading" class="card skeleton-card" aria-busy="true">
+          <div class="skeleton-line skeleton-line--lg"></div>
+          <div class="skeleton-line skeleton-line--md"></div>
+          <div class="skeleton-line skeleton-line--sm"></div>
+        </div>
+
+        <div v-else-if="sharedReport" class="shared-spotlight__card">
+          <ReportDossierCard :report="sharedReport" />
+        </div>
+
+        <div v-else class="card status-box">
+          <h3>Không tìm thấy hồ sơ cảnh báo này.</h3>
+          <p class="muted">Liên kết có thể không chính xác hoặc hồ sơ đã được gỡ bỏ khỏi hệ thống.</p>
+        </div>
+      </div>
+
       <div class="page-head">
         <div class="page-head__copy">
           <span class="label">Danh sách lừa đảo cộng đồng Việt tại Philippines</span>
-          <h1>Danh sách lừa đảo đã kiểm duyệt</h1>
+          <h1>{{ sharedReport ? 'Các hồ sơ lừa đảo khác' : 'Danh sách lừa đảo đã kiểm duyệt' }}</h1>
           <p class="muted measure">
             Tổng hợp các đối tượng mạo danh Shop Việt tại Philippines, lừa đổi tiền Peso - VND, nhận cọc ảo hoặc lừa đảo giao dịch đã được đối chiếu biên lai và thông tin định danh trước khi công bố.
           </p>
@@ -97,9 +167,9 @@ const {
         </div>
       </div>
 
-      <template v-else-if="visibleReports.length > 0">
+      <template v-else-if="feedReports.length > 0">
         <div class="cards-grid">
-          <ReportDossierCard v-for="rep in visibleReports" :key="rep.id" :report="rep" />
+          <ReportDossierCard v-for="rep in feedReports" :key="rep.id" :report="rep" />
         </div>
 
         <div v-if="hasMore" ref="sentinelRef" class="lazy-more">
@@ -118,7 +188,7 @@ const {
         Đang tìm kiếm thêm trên hệ thống...
       </div>
 
-      <div v-else class="card status-box">
+      <div v-else-if="!sharedReport" class="card status-box">
         <h3>Chưa tìm thấy hồ sơ lừa đảo phù hợp.</h3>
         <p class="muted">Thử thay đổi từ khóa tra cứu hoặc gửi hồ sơ mới nếu bạn vừa phát hiện hành vi lừa đảo.</p>
       </div>
@@ -129,6 +199,27 @@ const {
 <style scoped>
 .page-section {
   min-height: calc(100svh - var(--nav));
+}
+
+.shared-spotlight {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  margin-bottom: var(--s-7);
+  padding-bottom: var(--s-7);
+  border-bottom: 1px solid var(--p-line-strong);
+}
+
+.shared-spotlight__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shared-spotlight__card {
+  max-width: 780px;
 }
 
 .page-head {

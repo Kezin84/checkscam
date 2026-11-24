@@ -98,14 +98,14 @@ onBeforeUnmount(() => {
         <RouterLink
           to="/shops"
           class="nav-links__item"
-          :aria-current="route.path === '/shops' ? 'page' : undefined"
+          :aria-current="route.path.startsWith('/shops') ? 'page' : undefined"
         >
           Shop uy tín
         </RouterLink>
         <RouterLink
           to="/alerts"
           class="nav-links__item"
-          :aria-current="route.path === '/alerts' ? 'page' : undefined"
+          :aria-current="route.path.startsWith('/alerts') ? 'page' : undefined"
         >
           Danh sách lừa đảo
         </RouterLink>
@@ -152,7 +152,7 @@ onBeforeUnmount(() => {
     <RouterLink
       to="/shops"
       class="mobile-dock__item"
-      :aria-current="route.path === '/shops' ? 'page' : undefined"
+      :aria-current="route.path.startsWith('/shops') ? 'page' : undefined"
     >
       <svg viewBox="0 0 20 20" width="19" height="19" fill="none" aria-hidden="true">
         <path
@@ -168,7 +168,7 @@ onBeforeUnmount(() => {
     <RouterLink
       to="/alerts"
       class="mobile-dock__item"
-      :aria-current="route.path === '/alerts' ? 'page' : undefined"
+      :aria-current="route.path.startsWith('/alerts') ? 'page' : undefined"
     >
       <svg viewBox="0 0 20 20" width="19" height="19" fill="none" aria-hidden="true">
         <path d="M10 3L17.6 16.4H2.4L10 3Z" stroke="currentColor" stroke-width="1.6" />

@@ -117,6 +117,18 @@ async function fetchRecordById(collection, id) {
   }
 }
 
+export function fetchReportById(id) {
+  const cleanId = String(id || '').trim()
+  if (!cleanId) return Promise.resolve(null)
+  return fetchRecordById('scam_reports', cleanId)
+}
+
+export function fetchShopById(id) {
+  const cleanId = String(id || '').trim()
+  if (!cleanId) return Promise.resolve(null)
+  return fetchRecordById('trusted_shops', cleanId)
+}
+
 // Paginated server fetch for /alerts and Admin reports tab
 export async function fetchReportsPage({ batchSize = 6, cursorKey = null, platform = 'all' } = {}) {
   if (platform && platform !== 'all') {
@@ -212,6 +224,35 @@ export async function searchRecordsOnServer(
 ) {
   const trimmed = String(rawQuery || '').trim()
   if (!trimmed) return { reports: [], shops: [] }
+
+  // Support pasting a shared CheckScam card URL (/alerts/:id or /shops/:id) directly into search
+  const sharedPathMatch = trimmed.match(/\/(alerts|shops)\/([^/?#\s]+)/i)
+  if (sharedPathMatch) {
+    const [, kind, rawId] = sharedPathMatch
+    let decodedId = rawId
+    try {
+      decodedId = decodeURIComponent(rawId)
+    } catch {
+      decodedId = rawId
+    }
+    if (kind.toLowerCase() === 'alerts' && includeReports) {
+      const rep = await fetchRecordById('scam_reports', decodedId)
+      if (rep) {
+        return {
+          reports: [{ item: rep, match: { matched: true, rank: 1, matchType: null, matchedValue: decodedId } }],
+          shops: []
+        }
+      }
+    } else if (kind.toLowerCase() === 'shops' && includeShops) {
+      const shop = await fetchRecordById('trusted_shops', decodedId)
+      if (shop) {
+        return {
+          reports: [],
+          shops: [{ item: shop, match: { matched: true, rank: 1, matchType: null, matchedValue: decodedId } }]
+        }
+      }
+    }
+  }
 
   const plan = extractQueryPlan(trimmed)
   const scoreMap = new Map() // entityKey ('report_<id>' | 'shop_<id>') -> score

@@ -54,10 +54,6 @@ export function useAuth() {
     authError.value = ''
     try {
       const result = await signInWithPopup(auth, googleProvider)
-      const email = result.user?.email?.trim().toLowerCase()
-      if (email !== ADMIN_EMAIL) {
-        authError.value = `Tài khoản ${result.user?.email} không có quyền quản trị hệ thống.`
-      }
       return result.user
     } catch (err) {
       if (err?.code === 'auth/popup-closed-by-user') {
@@ -85,7 +81,6 @@ export function useAuth() {
     authReady,
     authError,
     isAdmin,
-    adminEmail: ADMIN_EMAIL,
     loginWithGoogle,
     logout
   }

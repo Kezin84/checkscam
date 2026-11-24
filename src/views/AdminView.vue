@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useAuth } from '@/services/firebase'
 import {
   useRepository,
@@ -36,7 +36,6 @@ const {
   authReady,
   authError,
   isAdmin,
-  adminEmail,
   loginWithGoogle,
   logout
 } = useAuth()
@@ -231,45 +230,48 @@ async function handleDeleteShop(shop) {
   }
 }
 
-const securityRulesJson = `{
+const securityRulesJson = computed(() => {
+  const email = currentUser.value?.email || ''
+  return `{
   "rules": {
     "trusted_shops": {
       ".read": true,
-      ".write": "auth != null && auth.token.email === '${adminEmail}'"
+      ".write": "auth != null && auth.token.email === '${email}'"
     },
     "scam_reports": {
       ".read": true,
-      ".write": "auth != null && auth.token.email === '${adminEmail}'"
+      ".write": "auth != null && auth.token.email === '${email}'"
     },
     "lookup_index": {
       ".read": true,
-      ".write": "auth != null && auth.token.email === '${adminEmail}'"
+      ".write": "auth != null && auth.token.email === '${email}'"
     },
     "cat_index": {
       ".read": true,
-      ".write": "auth != null && auth.token.email === '${adminEmail}'"
+      ".write": "auth != null && auth.token.email === '${email}'"
     },
     "plat_index": {
       ".read": true,
-      ".write": "auth != null && auth.token.email === '${adminEmail}'"
+      ".write": "auth != null && auth.token.email === '${email}'"
     },
     "site_meta": {
       ".read": true,
-      ".write": "auth != null && auth.token.email === '${adminEmail}'"
+      ".write": "auth != null && auth.token.email === '${email}'"
     },
     "pending_reports": {
-      ".read": "auth != null && auth.token.email === '${adminEmail}'",
+      ".read": "auth != null && auth.token.email === '${email}'",
       "$submissionId": {
-        ".write": "!data.exists() || (auth != null && auth.token.email === '${adminEmail}')",
+        ".write": "!data.exists() || (auth != null && auth.token.email === '${email}')",
         ".validate": "newData.hasChildren(['subjectName', 'scamType', 'createdAt']) || !newData.exists()"
       }
     },
     "reporter_archive": {
-      ".read": "auth != null && auth.token.email === '${adminEmail}'",
-      ".write": "auth != null && auth.token.email === '${adminEmail}'"
+      ".read": "auth != null && auth.token.email === '${email}'",
+      ".write": "auth != null && auth.token.email === '${email}'"
     }
   }
 }`
+})
 </script>
 
 <template>
@@ -291,7 +293,7 @@ const securityRulesJson = `{
         <div v-if="currentUser && !isAdmin" class="auth-mismatch">
           <strong>Tài khoản hiện tại chưa được cấp quyền:</strong>
           <span class="mono">{{ currentUser.email }}</span>
-          <p>Vui lòng đăng xuất và chọn đúng tài khoản Google quản trị ({{ adminEmail }}).</p>
+          <p>Vui lòng đăng xuất và đăng nhập bằng tài khoản quản trị được cấp quyền.</p>
         </div>
 
         <p v-if="authError" class="field__error">{{ authError }}</p>
@@ -753,7 +755,7 @@ const securityRulesJson = `{
                 <div>
                   <h3>Quy tắc bảo mật Firebase Realtime Database</h3>
                   <p class="muted">
-                    Dán cấu hình dưới đây vào mục <strong>Realtime Database → Rules → Publish</strong> trên Firebase Console để khóa quyền ghi chỉ cho phép <strong>{{ adminEmail }}</strong> duyệt bài và bảo vệ thông tin người tố cáo.
+                    Dán cấu hình dưới đây vào mục <strong>Realtime Database → Rules → Publish</strong> trên Firebase Console để khóa quyền ghi chỉ cho phép <strong>{{ currentUser?.email }}</strong> duyệt bài và bảo vệ thông tin người tố cáo.
                   </p>
                 </div>
                 <CopyButton :value="securityRulesJson" label="Chép toàn bộ Rules" />

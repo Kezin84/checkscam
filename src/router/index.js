@@ -9,13 +9,13 @@ const routes = [
     meta: { title: 'CHECK LỪA ĐẢO: Tra cứu Shop Việt tại Philippines & Danh sách lừa đảo' }
   },
   {
-    path: '/shops',
+    path: '/shops/:id?',
     name: 'shops',
     component: () => import('@/views/TrustedShopsView.vue'),
     meta: { title: 'Shop uy tín tại Philippines — CHECK LỪA ĐẢO' }
   },
   {
-    path: '/alerts',
+    path: '/alerts/:id?',
     name: 'alerts',
     component: () => import('@/views/AlertsView.vue'),
     meta: { title: 'Danh sách lừa đảo cộng đồng Việt tại Philippines — CHECK LỪA ĐẢO' }

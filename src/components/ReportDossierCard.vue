@@ -45,6 +45,12 @@ const totalScamAmount = computed(() => {
   return sum || Number(props.report.scamAmount || 0)
 })
 
+const shareUrl = computed(() => {
+  const id = String(props.report?.id || '').trim()
+  if (!id || typeof window === 'undefined') return ''
+  return `${window.location.origin}/alerts/${encodeURIComponent(id)}`
+})
+
 function openIncidentLightbox(images, idx) {
   lightboxImages.value = Array.isArray(images) ? images : []
   lightboxIdx.value = idx
@@ -99,7 +105,16 @@ function matchBadgeLabel(type) {
           {{ matchBadgeLabel(matchInfo.matchType) }}
         </span>
       </div>
-      <span class="mono dossier__date">Cập nhật {{ formatDateVi(report.createdAt) }}</span>
+      <div class="dossier__head-actions">
+        <span class="mono dossier__date">Cập nhật {{ formatDateVi(report.createdAt) }}</span>
+        <CopyButton
+          v-if="shareUrl"
+          :value="shareUrl"
+          label="Copy link"
+          copied-label="Đã chép link"
+          icon="link"
+        />
+      </div>
     </div>
 
     <div class="dossier__title-block">
@@ -261,6 +276,13 @@ function matchBadgeLabel(type) {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+.dossier__head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
 }
 
 .dossier__date {

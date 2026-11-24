@@ -1,8 +1,10 @@
 <script setup>
 import { ref, computed, watch, defineAsyncComponent } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   useRepository,
   fetchShopsPage,
+  fetchShopById,
   searchRecordsOnServer
 } from '@/services/repository'
 import { useServerFeed } from '@/composables/useServerFeed'
@@ -10,8 +12,42 @@ import CategorySelect from '@/components/CategorySelect.vue'
 
 const ShopDossierCard = defineAsyncComponent(() => import('@/components/ShopDossierCard.vue'))
 
+const route = useRoute()
+const router = useRouter()
 const { siteMeta } = useRepository()
 const activeCategory = ref('all')
+
+const sharedId = computed(() => String(route.params.id || route.query.id || '').trim())
+const sharedShop = ref(null)
+const sharedLoading = ref(false)
+let sharedReqId = 0
+
+watch(
+  sharedId,
+  async (id) => {
+    const reqId = ++sharedReqId
+    if (!id) {
+      sharedShop.value = null
+      sharedLoading.value = false
+      if (typeof document !== 'undefined') {
+        document.title = 'Shop uy tín tại Philippines — CHECK LỪA ĐẢO'
+      }
+      return
+    }
+    sharedLoading.value = true
+    try {
+      const found = await fetchShopById(id)
+      if (reqId !== sharedReqId) return
+      sharedShop.value = found
+      if (found?.shopName && typeof document !== 'undefined') {
+        document.title = `${found.shopName} — Shop uy tín | CHECK LỪA ĐẢO`
+      }
+    } finally {
+      if (reqId === sharedReqId) sharedLoading.value = false
+    }
+  },
+  { immediate: true }
+)
 
 const dbCategories = computed(() => siteMeta.value.shopCategories || [])
 
@@ -46,15 +82,49 @@ const {
     return res.shops.map((entry) => entry.item)
   }
 })
+
+const feedShops = computed(() => {
+  if (!sharedShop.value?.id) return visibleShops.value
+  return visibleShops.value.filter((shop) => shop.id !== sharedShop.value.id)
+})
 </script>
 
 <template>
   <section class="section page-section">
     <div class="wrap">
+      <!-- Shared Shop Spotlight (when opened via /shops/:id) -->
+      <div v-if="sharedId" class="shared-spotlight">
+        <div class="shared-spotlight__bar">
+          <span class="stamp stamp--verified">Danh thiếp Shop được chia sẻ</span>
+          <button
+            type="button"
+            class="btn btn--secondary btn--sm"
+            @click="router.push('/shops')"
+          >
+            Xem tất cả Shop uy tín
+          </button>
+        </div>
+
+        <div v-if="sharedLoading" class="card skeleton-card" aria-busy="true">
+          <div class="skeleton-line skeleton-line--lg"></div>
+          <div class="skeleton-line skeleton-line--md"></div>
+          <div class="skeleton-line skeleton-line--sm"></div>
+        </div>
+
+        <div v-else-if="sharedShop" class="shared-spotlight__card">
+          <ShopDossierCard :shop="sharedShop" />
+        </div>
+
+        <div v-else class="card status-box">
+          <h3>Không tìm thấy danh thiếp Shop này.</h3>
+          <p class="muted">Liên kết có thể không chính xác hoặc hồ sơ đã được gỡ bỏ khỏi danh bạ.</p>
+        </div>
+      </div>
+
       <div class="page-head">
         <div class="page-head__copy">
           <span class="label">Danh bạ Shop uy tín tại Philippines</span>
-          <h1>Shop uy tín đã xác minh tại Philippines</h1>
+          <h1>{{ sharedShop ? 'Các Shop uy tín khác tại Philippines' : 'Shop uy tín đã xác minh tại Philippines' }}</h1>
           <p class="muted measure">
             Danh sách các Shop Việt hoạt động tại Philippines (đổi tiền Peso - VND, đồ ăn &amp; tạp hóa Việt, đặt vé, thuê Condo, trung gian giao dịch...) đã được xác minh kênh liên hệ chính thức và tài khoản nhận tiền chính chủ.
           </p>
@@ -114,9 +184,9 @@ const {
         </div>
       </div>
 
-      <template v-else-if="visibleShops.length > 0">
+      <template v-else-if="feedShops.length > 0">
         <div class="cards-grid">
-          <ShopDossierCard v-for="shop in visibleShops" :key="shop.id" :shop="shop" />
+          <ShopDossierCard v-for="shop in feedShops" :key="shop.id" :shop="shop" />
         </div>
 
         <div v-if="hasMore" ref="sentinelRef" class="lazy-more">
@@ -135,7 +205,7 @@ const {
         Đang tìm kiếm thêm trên hệ thống...
       </div>
 
-      <div v-else class="card status-box">
+      <div v-else-if="!sharedShop" class="card status-box">
         <h3>Không có hồ sơ shop nào phù hợp với bộ lọc hiện tại.</h3>
         <p class="muted">Thử xóa từ khóa tìm kiếm hoặc chuyển sang lĩnh vực khác.</p>
       </div>
@@ -146,6 +216,27 @@ const {
 <style scoped>
 .page-section {
   min-height: calc(100svh - var(--nav));
+}
+
+.shared-spotlight {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  margin-bottom: var(--s-7);
+  padding-bottom: var(--s-7);
+  border-bottom: 1px solid var(--p-line-strong);
+}
+
+.shared-spotlight__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shared-spotlight__card {
+  max-width: 780px;
 }
 
 .page-head {

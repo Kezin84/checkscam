@@ -100,6 +100,12 @@ const badgeList = computed(() => {
 
 const isVerified = computed(() => props.shop.verified !== false)
 
+const shareUrl = computed(() => {
+  const id = String(props.shop?.id || '').trim()
+  if (!id || typeof window === 'undefined') return ''
+  return `${window.location.origin}/shops/${encodeURIComponent(id)}`
+})
+
 const initials = computed(() => {
   const words = String(props.shop.shopName || 'S')
     .trim()
@@ -220,7 +226,16 @@ function resolveBadgeStyle(label = '') {
             </span>
           </div>
 
-          <span v-if="shop.category" class="shop-card__category">{{ shop.category }}</span>
+          <div v-if="shop.category || shareUrl" class="shop-card__sub-row">
+            <span v-if="shop.category" class="shop-card__category">{{ shop.category }}</span>
+            <CopyButton
+              v-if="shareUrl"
+              :value="shareUrl"
+              label="Copy link"
+              copied-label="Đã chép link"
+              icon="link"
+            />
+          </div>
 
           <div v-if="badgeList.length" class="shop-card__tags">
           <span
@@ -454,17 +469,26 @@ function resolveBadgeStyle(label = '') {
               </span>
               <span v-if="shop.category" class="shop-modal__cat">{{ shop.category }}</span>
             </div>
-            <button
-              type="button"
-              class="modal-close-x"
-              aria-label="Đóng chi tiết shop"
-              title="Đóng (Esc)"
-              @click="closeDetailModal"
-            >
-              <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
-                <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-              </svg>
-            </button>
+            <div class="shop-modal__bar-actions">
+              <CopyButton
+                v-if="shareUrl"
+                :value="shareUrl"
+                label="Copy link"
+                copied-label="Đã chép link"
+                icon="link"
+              />
+              <button
+                type="button"
+                class="modal-close-x"
+                aria-label="Đóng chi tiết shop"
+                title="Đóng (Esc)"
+                @click="closeDetailModal"
+              >
+                <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
+                  <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </button>
+            </div>
           </div>
           <ShopDossierCard
             :shop="shop"
@@ -1049,12 +1073,19 @@ function resolveBadgeStyle(label = '') {
   transform: translateY(1px);
 }
 
+.shop-card__sub-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
 .shop-card__category {
   display: inline-flex;
   align-items: center;
   width: fit-content;
   padding: 2px 10px;
-  margin-top: 2px;
   border-radius: var(--r-sm);
   background: var(--p-accent-soft);
   border: 1px solid rgba(13, 116, 128, 0.22);
@@ -1251,6 +1282,13 @@ function resolveBadgeStyle(label = '') {
   align-items: center;
   gap: 8px;
   min-width: 0;
+}
+
+.shop-modal__bar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .shop-modal__title {
