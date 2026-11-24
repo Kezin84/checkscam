@@ -227,6 +227,16 @@ function removeExposeLink(inc, idx) {
   else inc.exposeLinks[0] = ''
 }
 
+function clearIncidentEvidenceError(idx) {
+  const inc = form.incidents[idx]
+  if (!inc || !errors.incidents[idx]?.evidence) return
+  const hasImages = inc.evidenceImages.length > 0
+  const hasLinks = inc.exposeLinks.some((lnk) => String(lnk || '').trim().length > 0)
+  if (hasImages || hasLinks) {
+    errors.incidents[idx].evidence = ''
+  }
+}
+
 function validate() {
   errors.subjectName = ''
   errors.identifier = ''
@@ -249,9 +259,11 @@ function validate() {
       errors.incidents[idx].scamType = 'Nhập trực tiếp hoặc bấm Chọn để điền hình thức lừa đảo.'
       hasIncidentError = true
     }
-    if (props.mode === 'public' && inc.evidenceImages.length === 0) {
+    const hasEvidenceImages = inc.evidenceImages.length > 0
+    const hasExposeLinks = inc.exposeLinks.some((lnk) => String(lnk || '').trim().length > 0)
+    if (props.mode === 'public' && !hasEvidenceImages && !hasExposeLinks) {
       errors.incidents[idx].evidence =
-        'Tải lên ít nhất 1 ảnh chụp màn hình bằng chứng (tin nhắn hoặc biên lai chuyển khoản).'
+        'Cần cung cấp ít nhất 1 ảnh bằng chứng hoặc 1 link đối chứng / bài viết bóc phốt.'
       hasIncidentError = true
     }
   })
@@ -559,21 +571,28 @@ function handleSubmit() {
 
           <div class="field">
             <span class="field__label">
-              <span>Bằng chứng hình ảnh {{ mode === 'public' ? '*' : '' }}</span>
+              <span>Bằng chứng hình ảnh</span>
+              <span v-if="mode === 'public'" class="field__hint">
+                Cần ít nhất ảnh bằng chứng hoặc link đối chứng bên dưới *
+              </span>
             </span>
             <EvidenceUploader
               v-model="inc.evidenceImages"
+              @update:model-value="clearIncidentEvidenceError(idx)"
               @uploading="(state) => setClusterUploading(inc._uid, state)"
             />
-            <p v-if="getIncidentError(idx, 'evidence')" class="field__error">
-              {{ getIncidentError(idx, 'evidence') }}
-            </p>
           </div>
 
           <div class="field">
             <span class="field__label">
-              <span>Link bài viết bóc phốt</span>
-              <span class="field__hint">Facebook Group, TikTok, Threads...</span>
+              <span>Link đối chứng / bài viết bóc phốt</span>
+              <span class="field__hint">
+                {{
+                  mode === 'public'
+                    ? 'Facebook Group, TikTok, Threads... (Chỉ cần ảnh hoặc link là gửi được)'
+                    : 'Facebook Group, TikTok, Threads...'
+                }}
+              </span>
             </span>
             <div class="expose-inputs">
               <div v-for="(_, lIdx) in inc.exposeLinks" :key="lIdx" class="expose-inputs__row">
@@ -581,8 +600,10 @@ function handleSubmit() {
                   v-model="inc.exposeLinks[lIdx]"
                   type="url"
                   class="field__input"
-                  :aria-label="`Link bài viết bóc phốt ${lIdx + 1} của cụm ${idx + 1}`"
+                  :aria-label="`Link đối chứng ${lIdx + 1} của cụm ${idx + 1}`"
+                  :aria-invalid="lIdx === 0 && getIncidentError(idx, 'evidence') ? 'true' : undefined"
                   placeholder="https://facebook.com/groups/..."
+                  @input="clearIncidentEvidenceError(idx)"
                 />
                 <button
                   v-if="inc.exposeLinks.length > 1 || inc.exposeLinks[0]"
@@ -594,9 +615,12 @@ function handleSubmit() {
                 </button>
               </div>
             </div>
+            <p v-if="getIncidentError(idx, 'evidence')" class="field__error">
+              {{ getIncidentError(idx, 'evidence') }}
+            </p>
             <div>
               <button type="button" class="btn btn--secondary btn--sm" @click="addExposeLink(inc)">
-                + Thêm link bài phốt
+                + Thêm link đối chứng / bài phốt
               </button>
             </div>
           </div>

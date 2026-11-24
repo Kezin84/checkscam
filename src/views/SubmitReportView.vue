@@ -37,7 +37,7 @@ function sendAnother() {
         <span class="label">Bảo vệ cộng đồng Việt tại Philippines</span>
         <h1>Gửi hồ sơ tố cáo lừa đảo</h1>
         <p class="muted measure">
-          Điền chính xác số tài khoản ngân hàng / ví GCash nhận tiền, tài khoản Telegram, Facebook, Zalo và tải lên ảnh chụp biên lai hoặc tin nhắn để cảnh báo cho cộng đồng người Việt tại Philippines sau khi quản trị viên kiểm duyệt.
+          Điền chính xác số tài khoản ngân hàng / ví GCash nhận tiền, tài khoản Telegram, Facebook, Zalo và cung cấp ảnh chụp bằng chứng hoặc link bài viết đối chứng để cảnh báo cho cộng đồng người Việt tại Philippines sau khi quản trị viên kiểm duyệt.
         </p>
       </div>
 

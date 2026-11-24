@@ -366,7 +366,12 @@ function sanitizeSocials(socials = []) {
 
 function sanitizeLinks(links = []) {
   return (Array.isArray(links) ? links : [])
-    .map((l) => String(l || '').trim())
+    .map((l) => {
+      const clean = String(l || '').trim()
+      if (!clean) return ''
+      if (/^(https?:\/\/|\/|data:|blob:)/i.test(clean)) return clean
+      return `https://${clean}`
+    })
     .filter(Boolean)
 }
 

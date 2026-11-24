@@ -127,6 +127,16 @@ function formatTelegramMessage({ reportId, report, adminUrl }) {
     )
   }
 
+  const exposeLinks = Array.isArray(report.exposeLinks) ? report.exposeLinks.filter(Boolean) : []
+  if (exposeLinks.length > 0) {
+    const formattedExpose = exposeLinks
+      .slice(0, 8)
+      .map((url) => (/^https?:\/\//i.test(url) ? url : `https://${url}`))
+      .map((url, idx) => `<a href="${escapeAttr(url)}">Link ${idx + 1}</a>`)
+    lines.push('')
+    lines.push(`🔗 <b>Link đối chứng (${exposeLinks.length}):</b> ${formattedExpose.join(' | ')}`)
+  }
+
   if (adminUrl) {
     lines.push('')
     lines.push(`🔗 <a href="${escapeAttr(adminUrl)}">Mở trang Admin duyệt đơn</a>`)
