@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
+import { applyClientSeo } from '@/composables/useSiteSeo'
 
 const routes = [
   {
@@ -49,9 +50,10 @@ const router = createRouter({
 })
 
 router.afterEach((to) => {
-  if (to.meta?.title) {
-    document.title = to.meta.title
-  }
+  applyClientSeo({
+    routeName: String(to.name || 'home'),
+    path: to.path || '/'
+  })
 })
 
 export default router

@@ -1,8 +1,10 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
+import { useSiteSeo } from '@/composables/useSiteSeo'
 
 const route = useRoute()
+const { siteName, logoUrl, contactTelegram } = useSiteSeo()
 const dockHidden = ref(false)
 let lastScrollY = 0
 let touchStartY = 0
@@ -80,11 +82,11 @@ onBeforeUnmount(() => {
     <div class="wrap nav-bar__inner">
       <a class="skip-link" href="#top">Chuyển tới nội dung chính</a>
 
-      <RouterLink to="/" class="nav-brand" aria-label="CHECK LỪA ĐẢO Trang chủ">
+      <RouterLink to="/" class="nav-brand" :aria-label="`${siteName} Trang chủ`">
         <span class="nav-brand__mark" aria-hidden="true">
-          <img src="/logo.jpg" alt="" class="nav-brand__img" width="28" height="28" />
+          <img :src="logoUrl" alt="" class="nav-brand__img" width="28" height="28" />
         </span>
-        <span class="nav-brand__word">CHECK LỪA ĐẢO</span>
+        <span class="nav-brand__word">{{ siteName }}</span>
       </RouterLink>
 
       <nav class="nav-links" aria-label="Điều hướng chính">
@@ -110,7 +112,7 @@ onBeforeUnmount(() => {
           Danh sách lừa đảo
         </RouterLink>
         <a
-          href="https://t.me/dakv88"
+          :href="contactTelegram.url"
           target="_blank"
           rel="noopener noreferrer"
           class="nav-links__item"
@@ -190,7 +192,7 @@ onBeforeUnmount(() => {
     </RouterLink>
 
     <a
-      href="https://t.me/dakv88"
+      :href="contactTelegram.url"
       target="_blank"
       rel="noopener noreferrer"
       class="mobile-dock__item"

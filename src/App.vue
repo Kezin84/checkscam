@@ -1,8 +1,20 @@
 <script setup>
+import { watch } from 'vue'
 import { Analytics } from '@vercel/analytics/vue'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import ScrollTopButton from '@/components/ScrollTopButton.vue'
+import { useSiteSeo } from '@/composables/useSiteSeo'
+
+const { seoSettings, applyClientSeo } = useSiteSeo()
+
+watch(
+  seoSettings,
+  () => {
+    applyClientSeo()
+  },
+  { deep: true }
+)
 </script>
 
 <template>

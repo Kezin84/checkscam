@@ -1,5 +1,8 @@
 <script setup>
+import { useSiteSeo } from '@/composables/useSiteSeo'
+
 const year = new Date().getFullYear()
+const { siteName, logoUrl, footerTagline, contactTelegram } = useSiteSeo()
 </script>
 
 <template>
@@ -27,11 +30,11 @@ const year = new Date().getFullYear()
       <div class="closing__directory">
         <div class="closing__brand-col">
           <div class="closing__logo">
-            <img src="/logo.jpg" alt="" class="closing__logo-img" width="24" height="24" />
-            <span>CHECK LỪA ĐẢO</span>
+            <img :src="logoUrl" alt="" class="closing__logo-img" width="24" height="24" />
+            <span>{{ siteName }}</span>
           </div>
           <p class="closing__note">
-            Cổng tra cứu thông tin Shop Việt uy tín tại Philippines, hỗ trợ đối chiếu số tài khoản ngân hàng, ví GCash, liên kết mạng xã hội và danh sách lừa đảo phục vụ cộng đồng người Việt tại Philippines.
+            {{ footerTagline }}
           </p>
         </div>
 
@@ -50,7 +53,7 @@ const year = new Date().getFullYear()
           <div class="closing__col">
             <h3>Liên hệ</h3>
             <a
-              href="https://t.me/dakv88"
+              :href="contactTelegram.url"
               target="_blank"
               rel="noopener noreferrer"
               class="closing__tele"
@@ -62,15 +65,15 @@ const year = new Date().getFullYear()
                   d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"
                 />
               </svg>
-              <span>Telegram: <strong class="mono">@dakv88</strong></span>
+              <span>Telegram: <strong class="mono">{{ contactTelegram.displayHandle }}</strong></span>
             </a>
             <a
-              href="https://t.me/dakv88"
+              :href="contactTelegram.url"
               target="_blank"
               rel="noopener noreferrer"
               class="mono closing__tele-url"
             >
-              t.me/dakv88
+              {{ contactTelegram.shortUrl }}
             </a>
             <span class="closing__col-hint">Hỗ trợ xác minh Shop Việt tại Philippines &amp; phản hồi hồ sơ.</span>
           </div>
@@ -78,7 +81,7 @@ const year = new Date().getFullYear()
       </div>
 
       <div class="closing__legal">
-        <span>© {{ year }} CHECK LỪA ĐẢO. Dữ liệu tố cáo được kiểm duyệt trước khi hiển thị công khai.</span>
+        <span>© {{ year }} {{ siteName }}. Dữ liệu tố cáo được kiểm duyệt trước khi hiển thị công khai.</span>
         <span>Tên và biểu trưng ngân hàng, mạng xã hội thuộc quyền sở hữu của đơn vị chủ quản.</span>
       </div>
     </div>

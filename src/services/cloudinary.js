@@ -7,14 +7,28 @@ const ALLOWED_MIME = [
   'image/webp',
   'image/gif',
   'image/bmp',
-  'image/avif'
+  'image/avif',
+  'image/svg+xml',
+  'image/x-icon',
+  'image/vnd.microsoft.icon'
 ]
 const MAX_FILE_BYTES = 10 * 1024 * 1024 // 10MB
 const MAX_UPLOAD_DIMENSION = 1600
 const JPEG_QUALITY = 0.86
 
-function convertFileToJpeg(file) {
+function prepareImageFile(file, { preserveTransparency = false, maxDimension = MAX_UPLOAD_DIMENSION } = {}) {
   return new Promise((resolve) => {
+    // Keep SVG / ICO / animated GIF untouched
+    if (
+      file.type === 'image/svg+xml' ||
+      file.type === 'image/x-icon' ||
+      file.type === 'image/vnd.microsoft.icon' ||
+      (preserveTransparency && file.type === 'image/gif')
+    ) {
+      resolve(file)
+      return
+    }
+
     if (typeof document === 'undefined' || typeof Image === 'undefined') {
       resolve(file)
       return
@@ -32,9 +46,42 @@ function convertFileToJpeg(file) {
           return
         }
 
-        const scale = Math.min(1, MAX_UPLOAD_DIMENSION / Math.max(width, height))
+        const scale = Math.min(1, maxDimension / Math.max(width, height))
         const targetW = Math.max(1, Math.round(width * scale))
         const targetH = Math.max(1, Math.round(height * scale))
+
+        // Preserve transparent PNG/WebP logos & favicons without flattening onto white JPEG
+        if (preserveTransparency) {
+          if (scale === 1 && file.size <= 1024 * 1024) {
+            URL.revokeObjectURL(objectUrl)
+            resolve(file)
+            return
+          }
+          const canvas = document.createElement('canvas')
+          canvas.width = targetW
+          canvas.height = targetH
+          const ctx = canvas.getContext('2d')
+          if (!ctx) {
+            URL.revokeObjectURL(objectUrl)
+            resolve(file)
+            return
+          }
+          ctx.clearRect(0, 0, targetW, targetH)
+          ctx.drawImage(img, 0, 0, targetW, targetH)
+          canvas.toBlob(
+            (blob) => {
+              URL.revokeObjectURL(objectUrl)
+              if (!blob) {
+                resolve(file)
+                return
+              }
+              const baseName = String(file.name || 'image').replace(/\.[^.]+$/, '')
+              resolve(new File([blob], `${baseName}.png`, { type: 'image/png' }))
+            },
+            'image/png'
+          )
+          return
+        }
 
         // Keep already-small JPEGs untouched to avoid double re-encoding
         if (file.type === 'image/jpeg' && scale === 1 && file.size <= 350 * 1024) {
@@ -85,14 +132,14 @@ function convertFileToJpeg(file) {
   })
 }
 
-export function uploadImageToCloudinary(file, onProgress) {
+export function uploadImageToCloudinary(file, onProgress, options = {}) {
   return new Promise((resolve, reject) => {
     if (!file) {
       reject(new Error('Không tìm thấy tệp ảnh để tải lên.'))
       return
     }
     if (file.type && !ALLOWED_MIME.includes(file.type)) {
-      reject(new Error('Chỉ chấp nhận tệp hình ảnh hợp lệ (JPG, PNG, WebP, GIF, BMP, AVIF).'))
+      reject(new Error('Chỉ chấp nhận tệp hình ảnh hợp lệ (JPG, PNG, WebP, SVG, ICO, GIF, AVIF).'))
       return
     }
     if (file.size > MAX_FILE_BYTES) {
@@ -100,7 +147,7 @@ export function uploadImageToCloudinary(file, onProgress) {
       return
     }
 
-    convertFileToJpeg(file).then((preparedFile) => {
+    prepareImageFile(file, options).then((preparedFile) => {
       const endpoint = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`
       const formData = new FormData()
       formData.append('file', preparedFile)

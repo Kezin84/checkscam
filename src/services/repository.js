@@ -16,7 +16,7 @@ import {
   limitToLast,
   runTransaction
 } from 'firebase/database'
-import { db } from './firebase'
+import { db, auth } from './firebase'
 import {
   buildSearchPayload,
   buildIndexTokens,
@@ -27,13 +27,29 @@ import {
   normalizeAccountHolder,
   extractSocialIdentifier
 } from '@/utils/normalize'
+import { normalizeSeoSettings } from '@/utils/seoConfig'
 
-// Lightweight global metadata (~300 bytes) instead of downloading entire DB
+function readHydratedSeoState() {
+  if (typeof document === 'undefined') return normalizeSeoSettings(null)
+  try {
+    const el = document.getElementById('__SITE_SEO__')
+    if (el && el.textContent) {
+      return normalizeSeoSettings(JSON.parse(el.textContent))
+    }
+  } catch {
+    // ignore invalid inline JSON
+  }
+  return normalizeSeoSettings(null)
+}
+
+// Lightweight global metadata (never downloads site_meta/sitemapEntries to normal visitors)
 const siteMeta = vueRef({
   reportsCount: 0,
   shopsCount: 0,
   shopCategories: []
 })
+const seoSettings = vueRef(readHydratedSeoState())
+const seoLoaded = vueRef(false)
 const metaLoading = vueRef(true)
 
 // Admin pending submissions queue (small unreviewed queue, admin-only)
@@ -70,12 +86,9 @@ function orderedSnapToDescList(snap) {
   return asc.reverse()
 }
 
-function parseSiteMeta(raw) {
-  if (!raw || typeof raw !== 'object') {
-    return { reportsCount: 0, shopsCount: 0, shopCategories: [] }
-  }
-  const catObj = raw.shopCategories && typeof raw.shopCategories === 'object' ? raw.shopCategories : {}
-  const shopCategories = Object.entries(catObj)
+function parseShopCategories(catObj) {
+  if (!catObj || typeof catObj !== 'object') return []
+  return Object.entries(catObj)
     .map(([key, val]) => ({
       key,
       label: String(val?.label || key).trim(),
@@ -83,26 +96,64 @@ function parseSiteMeta(raw) {
     }))
     .filter((c) => c.label && c.count > 0)
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, 'vi'))
-
-  return {
-    reportsCount: Math.max(0, Number(raw.reportsCount || 0)),
-    shopsCount: Math.max(0, Number(raw.shopsCount || 0)),
-    shopCategories
-  }
 }
 
 export function initSiteMetaListener() {
   if (metaSubscribed) return
   metaSubscribed = true
 
+  // Subscribe only to small public child paths so site_meta/sitemapEntries is never downloaded by visitors
   onValue(
-    dbRef(db, 'site_meta'),
+    dbRef(db, 'site_meta/reportsCount'),
     (snap) => {
-      siteMeta.value = parseSiteMeta(snap.val())
+      siteMeta.value = {
+        ...siteMeta.value,
+        reportsCount: Math.max(0, Number(snap.val() || 0))
+      }
       metaLoading.value = false
     },
     () => {
       metaLoading.value = false
+    }
+  )
+
+  onValue(
+    dbRef(db, 'site_meta/shopsCount'),
+    (snap) => {
+      siteMeta.value = {
+        ...siteMeta.value,
+        shopsCount: Math.max(0, Number(snap.val() || 0))
+      }
+      metaLoading.value = false
+    },
+    () => {
+      metaLoading.value = false
+    }
+  )
+
+  onValue(
+    dbRef(db, 'site_meta/shopCategories'),
+    (snap) => {
+      siteMeta.value = {
+        ...siteMeta.value,
+        shopCategories: parseShopCategories(snap.val())
+      }
+      metaLoading.value = false
+    },
+    () => {
+      metaLoading.value = false
+    }
+  )
+
+  onValue(
+    dbRef(db, 'site_meta/seo'),
+    (snap) => {
+      const val = snap.val()
+      seoSettings.value = normalizeSeoSettings(val)
+      seoLoaded.value = true
+    },
+    () => {
+      seoLoaded.value = true
     }
   )
 }
@@ -614,43 +665,147 @@ export async function submitUserPendingReport(raw) {
 }
 
 async function adjustSiteMetaForReport(delta) {
-  await runTransaction(dbRef(db, 'site_meta'), (cur) => {
-    const next = cur && typeof cur === 'object' ? { ...cur } : { reportsCount: 0, shopsCount: 0, shopCategories: {} }
-    next.reportsCount = Math.max(0, Number(next.reportsCount || 0) + delta)
-    return next
+  await runTransaction(dbRef(db, 'site_meta/reportsCount'), (cur) => {
+    return Math.max(0, Number(cur || 0) + delta)
   })
 }
 
 async function adjustSiteMetaForShop({ countDelta = 0, oldCatKey = '', newCatKey = '', newCatLabel = '' }) {
-  await runTransaction(dbRef(db, 'site_meta'), (cur) => {
-    const next = cur && typeof cur === 'object' ? { ...cur } : { reportsCount: 0, shopsCount: 0, shopCategories: {} }
-    next.shopsCount = Math.max(0, Number(next.shopsCount || 0) + countDelta)
-    const cats = next.shopCategories && typeof next.shopCategories === 'object' ? { ...next.shopCategories } : {}
+  const tasks = []
+  if (countDelta !== 0) {
+    tasks.push(
+      runTransaction(dbRef(db, 'site_meta/shopsCount'), (cur) => {
+        return Math.max(0, Number(cur || 0) + countDelta)
+      })
+    )
+  }
+  if (oldCatKey || (newCatKey && newCatLabel)) {
+    tasks.push(
+      runTransaction(dbRef(db, 'site_meta/shopCategories'), (cur) => {
+        const cats = cur && typeof cur === 'object' ? { ...cur } : {}
 
-    if (oldCatKey && cats[oldCatKey]) {
-      const dec = Number(cats[oldCatKey].count || 1) - 1
-      if (dec <= 0) delete cats[oldCatKey]
-      else cats[oldCatKey] = { ...cats[oldCatKey], count: dec }
-    }
+        if (oldCatKey && cats[oldCatKey]) {
+          const dec = Number(cats[oldCatKey].count || 1) - 1
+          if (dec <= 0) delete cats[oldCatKey]
+          else cats[oldCatKey] = { ...cats[oldCatKey], count: dec }
+        }
 
-    if (newCatKey && newCatLabel) {
-      const prevCount = Number(cats[newCatKey]?.count || 0)
-      cats[newCatKey] = { label: newCatLabel, count: prevCount + 1 }
-    }
+        if (newCatKey && newCatLabel) {
+          const prevCount = Number(cats[newCatKey]?.count || 0)
+          cats[newCatKey] = { label: newCatLabel, count: prevCount + 1 }
+        }
 
-    next.shopCategories = cats
-    return next
-  })
+        return cats
+      })
+    )
+  }
+  await Promise.all(tasks)
 }
 
-// Admin: approve pending report -> write to scam_reports + lookup_index + plat_index, archive reporter, remove pending
+export async function purgeEdgeSeoCache() {
+  try {
+    const idToken = await auth.currentUser?.getIdToken()
+    if (!idToken) return { ok: false, skipped: true }
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 6000)
+    const res = await fetch('/api/seo-cache-purge', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${idToken}`
+      },
+      signal: controller.signal
+    })
+    clearTimeout(timer)
+    const contentType = res.headers.get('content-type') || ''
+    if (!contentType.includes('application/json')) {
+      return { ok: false, status: res.status }
+    }
+    const data = await res.json().catch(() => ({}))
+    return { ok: Boolean(res.ok && data?.ok), ...data }
+  } catch (err) {
+    return { ok: false, error: err?.message || 'Network error' }
+  }
+}
+
+export async function saveSeoSettings(rawSettings) {
+  const normalized = normalizeSeoSettings({
+    ...rawSettings,
+    updatedAt: Date.now()
+  })
+  await set(dbRef(db, 'site_meta/seo'), normalized)
+  seoSettings.value = normalized
+  const purge = await purgeEdgeSeoCache()
+  return { settings: normalized, cachePurged: Boolean(purge?.ok) }
+}
+
+export async function fetchSitemapStats() {
+  try {
+    const snap = await get(dbRef(db, 'site_meta/sitemapEntries'))
+    const val = snap.val() || {}
+    const shopsCount = val.shops && typeof val.shops === 'object' ? Object.keys(val.shops).length : 0
+    const reportsCount =
+      val.reports && typeof val.reports === 'object' ? Object.keys(val.reports).length : 0
+    return {
+      shopsCount,
+      reportsCount,
+      syncedAt: Number(val.syncedAt || 0)
+    }
+  } catch {
+    return { shopsCount: 0, reportsCount: 0, syncedAt: 0 }
+  }
+}
+
+export async function syncSitemapEntriesFromDatabase() {
+  const [shopsSnap, reportsSnap] = await Promise.all([
+    get(dbRef(db, 'trusted_shops')),
+    get(dbRef(db, 'scam_reports'))
+  ])
+
+  const shops = {}
+  const rawShops = shopsSnap.val()
+  if (rawShops && typeof rawShops === 'object') {
+    for (const [id, item] of Object.entries(rawShops)) {
+      if (item && typeof item === 'object') {
+        shops[id] = Number(item.updatedAt || item.createdAt || Date.now())
+      }
+    }
+  }
+
+  const reports = {}
+  const rawReports = reportsSnap.val()
+  if (rawReports && typeof rawReports === 'object') {
+    for (const [id, item] of Object.entries(rawReports)) {
+      if (item && typeof item === 'object') {
+        reports[id] = Number(item.updatedAt || item.createdAt || Date.now())
+      }
+    }
+  }
+
+  const syncedAt = Date.now()
+  await set(dbRef(db, 'site_meta/sitemapEntries'), {
+    shops,
+    reports,
+    syncedAt
+  })
+
+  await purgeEdgeSeoCache()
+
+  return {
+    shopsCount: Object.keys(shops).length,
+    reportsCount: Object.keys(reports).length,
+    syncedAt
+  }
+}
+
+// Admin: approve pending report -> write to scam_reports + lookup_index + plat_index + sitemapEntries, archive reporter, remove pending
 export async function approvePendingReport(pendingId, editedData) {
   const publicPayload = prepareScamReportPayload(editedData, editedData.createdAt)
   const approvedId = push(dbRef(db, 'scam_reports')).key
 
   const updates = {
     [`scam_reports/${approvedId}`]: publicPayload,
-    [`pending_reports/${pendingId}`]: null
+    [`pending_reports/${pendingId}`]: null,
+    [`site_meta/sitemapEntries/reports/${approvedId}`]: publicPayload.updatedAt
   }
   for (const k of publicPayload.indexKeys) {
     updates[`lookup_index/${k}/report_${approvedId}`] = 1
@@ -676,7 +831,7 @@ export async function rejectPendingReport(pendingId) {
   await remove(dbRef(db, `pending_reports/${pendingId}`))
 }
 
-// Admin CRUD for scam_reports (atomic index sync)
+// Admin CRUD for scam_reports (atomic index + sitemap sync)
 export async function saveApprovedReport(raw, reportId = null) {
   const isNew = !reportId
   const targetId = reportId || push(dbRef(db, 'scam_reports')).key
@@ -689,7 +844,8 @@ export async function saveApprovedReport(raw, reportId = null) {
 
   const payload = prepareScamReportPayload(raw, oldData?.createdAt || raw.createdAt)
   const updates = {
-    [`scam_reports/${targetId}`]: payload
+    [`scam_reports/${targetId}`]: payload,
+    [`site_meta/sitemapEntries/reports/${targetId}`]: payload.updatedAt
   }
 
   for (const oldKey of oldData?.indexKeys || []) {
@@ -720,7 +876,8 @@ export async function deleteApprovedReport(reportId) {
   const oldData = oldSnap.val()
 
   const updates = {
-    [`scam_reports/${reportId}`]: null
+    [`scam_reports/${reportId}`]: null,
+    [`site_meta/sitemapEntries/reports/${reportId}`]: null
   }
   for (const oldKey of oldData?.indexKeys || []) {
     updates[`lookup_index/${oldKey}/report_${reportId}`] = null
@@ -734,7 +891,7 @@ export async function deleteApprovedReport(reportId) {
   bumpFeedCache()
 }
 
-// Admin CRUD for trusted_shops (atomic index + category sync)
+// Admin CRUD for trusted_shops (atomic index + category + sitemap sync)
 export async function saveTrustedShop(raw, shopId = null) {
   const isNew = !shopId
   const targetId = shopId || push(dbRef(db, 'trusted_shops')).key
@@ -749,7 +906,8 @@ export async function saveTrustedShop(raw, shopId = null) {
   const oldCatKey = oldData?.categoryKey || (oldData?.category ? toSafeIndexKey(oldData.category) : '')
 
   const updates = {
-    [`trusted_shops/${targetId}`]: payload
+    [`trusted_shops/${targetId}`]: payload,
+    [`site_meta/sitemapEntries/shops/${targetId}`]: payload.updatedAt
   }
 
   for (const oldKey of oldData?.indexKeys || []) {
@@ -784,7 +942,8 @@ export async function deleteTrustedShop(shopId) {
   const oldCatKey = oldData?.categoryKey || (oldData?.category ? toSafeIndexKey(oldData.category) : '')
 
   const updates = {
-    [`trusted_shops/${shopId}`]: null
+    [`trusted_shops/${shopId}`]: null,
+    [`site_meta/sitemapEntries/shops/${shopId}`]: null
   }
   for (const oldKey of oldData?.indexKeys || []) {
     updates[`lookup_index/${oldKey}/shop_${shopId}`] = null
@@ -807,6 +966,8 @@ export function useRepository() {
   initSiteMetaListener()
   return {
     siteMeta,
+    seoSettings,
+    seoLoaded,
     metaLoading,
     pendingReports,
     pendingLoading

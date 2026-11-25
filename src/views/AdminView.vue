@@ -30,6 +30,7 @@ import TrustedShopForm from '@/components/TrustedShopForm.vue'
 import LightboxModal from '@/components/LightboxModal.vue'
 import CopyButton from '@/components/CopyButton.vue'
 import PlatformIcon from '@/components/icons/PlatformIcon.vue'
+import SeoSettingsPanel from '@/components/SeoSettingsPanel.vue'
 
 const {
   currentUser,
@@ -42,7 +43,7 @@ const {
 
 const { siteMeta, pendingReports, pendingLoading } = useRepository()
 
-const activeTab = ref('pending') // 'pending' | 'reports' | 'shops' | 'rules'
+const activeTab = ref('pending') // 'pending' | 'reports' | 'shops' | 'seo' | 'rules'
 const actionBusy = ref(false)
 const feedbackMsg = ref('')
 const feedbackType = ref('ok')
@@ -448,6 +449,17 @@ const securityRulesJson = computed(() => {
               type="button"
               role="tab"
               class="admin-tabs__btn"
+              :class="{ 'is-active': activeTab === 'seo' }"
+              :aria-selected="activeTab === 'seo' ? 'true' : 'false'"
+              @click="activeTab = 'seo'"
+            >
+              <span>Cài đặt SEO</span>
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              class="admin-tabs__btn"
               :class="{ 'is-active': activeTab === 'rules' }"
               :aria-selected="activeTab === 'rules' ? 'true' : 'false'"
               @click="activeTab = 'rules'"
@@ -762,7 +774,12 @@ const securityRulesJson = computed(() => {
             </div>
           </div>
 
-          <!-- TAB 4: DATABASE SECURITY RULES -->
+          <!-- TAB 4: SEO & SITE SETTINGS -->
+          <div v-else-if="activeTab === 'seo'" class="admin-panel">
+            <SeoSettingsPanel @notify="notify" />
+          </div>
+
+          <!-- TAB 5: DATABASE SECURITY RULES -->
           <div v-else-if="activeTab === 'rules'" class="admin-panel">
             <div class="card rules-card">
               <div class="rules-card__head">

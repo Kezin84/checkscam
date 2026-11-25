@@ -17,6 +17,46 @@ const matchedReports = ref([])
 const matchedShops = ref([])
 const resultsAnchor = ref(null)
 let searchReqId = 0
+const recentNotifiedQueries = new Map()
+
+function notifyHomeSearch(queryText, res) {
+  const clean = String(queryText || '').trim()
+  if (clean.length < 2) return
+
+  const key = clean.toLowerCase()
+  const now = Date.now()
+  const prev = recentNotifiedQueries.get(key)
+  if (prev && now - prev < 45_000) return
+  recentNotifiedQueries.set(key, now)
+
+  const reports = Array.isArray(res?.reports) ? res.reports : []
+  const shops = Array.isArray(res?.shops) ? res.shops : []
+
+  const payload = {
+    query: clean,
+    reportsCount: reports.length,
+    shopsCount: shops.length,
+    matchedReportNames: reports
+      .slice(0, 3)
+      .map((entry) => entry?.item?.subjectName)
+      .filter(Boolean),
+    matchedShopNames: shops
+      .slice(0, 3)
+      .map((entry) => entry?.item?.shopName)
+      .filter(Boolean)
+  }
+
+  try {
+    fetch('/api/notify-search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true
+    }).catch(() => {})
+  } catch {
+    // Non-blocking telemetry
+  }
+}
 
 async function performServerSearch(q) {
   const trimmed = String(q || '').trim()
@@ -34,6 +74,7 @@ async function performServerSearch(q) {
     if (reqId !== searchReqId) return
     matchedReports.value = res.reports
     matchedShops.value = res.shops
+    notifyHomeSearch(trimmed, res)
   } finally {
     if (reqId === searchReqId) isSearching.value = false
   }

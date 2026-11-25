@@ -9,12 +9,14 @@ import {
 } from '@/services/repository'
 import PlatformSelect from '@/components/PlatformSelect.vue'
 import { useServerFeed } from '@/composables/useServerFeed'
+import { useSiteSeo } from '@/composables/useSiteSeo'
 
 const ReportDossierCard = defineAsyncComponent(() => import('@/components/ReportDossierCard.vue'))
 
 const route = useRoute()
 const router = useRouter()
 const { siteMeta } = useRepository()
+const { applyClientSeo } = useSiteSeo()
 const activePlatform = ref('all')
 
 const sharedId = computed(() => String(route.params.id || route.query.id || '').trim())
@@ -29,9 +31,7 @@ watch(
     if (!id) {
       sharedReport.value = null
       sharedLoading.value = false
-      if (typeof document !== 'undefined') {
-        document.title = 'Danh sách lừa đảo cộng đồng Việt tại Philippines — CHECK LỪA ĐẢO'
-      }
+      applyClientSeo({ routeName: 'alerts', path: '/alerts' })
       return
     }
     sharedLoading.value = true
@@ -39,9 +39,12 @@ watch(
       const found = await fetchReportById(id)
       if (reqId !== sharedReqId) return
       sharedReport.value = found
-      if (found?.subjectName && typeof document !== 'undefined') {
-        document.title = `Cảnh báo: ${found.subjectName} — CHECK LỪA ĐẢO`
-      }
+      applyClientSeo({
+        routeName: 'alerts',
+        path: route.path,
+        dynamicType: found ? 'alert' : null,
+        dynamicItem: found || null
+      })
     } finally {
       if (reqId === sharedReqId) sharedLoading.value = false
     }
