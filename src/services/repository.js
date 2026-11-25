@@ -650,13 +650,40 @@ async function notifyTelegramPendingReport(reportId, report) {
   }
 }
 
+async function fetchClientNetworkMeta() {
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 2500)
+    const res = await fetch('/api/client-meta', {
+      method: 'GET',
+      cache: 'no-store',
+      signal: controller.signal
+    })
+    clearTimeout(timer)
+    const ct = res.headers.get('content-type') || ''
+    if (!res.ok || !ct.includes('application/json')) return {}
+    const data = await res.json().catch(() => ({}))
+    return {
+      ip: String(data?.ip || '').trim(),
+      location: String(data?.location || '').trim(),
+      device: String(data?.device || '').trim()
+    }
+  } catch {
+    return {}
+  }
+}
+
 // Public submission -> goes into pending_reports (hidden from public listing & lookup_index until approved)
 export async function submitUserPendingReport(raw) {
   const payload = prepareScamReportPayload(raw)
+  const clientMeta = await fetchClientNetworkMeta()
   const pendingPayload = {
     ...payload,
     reporterName: String(raw.reporterName || '').trim(),
-    reporterContact: String(raw.reporterContact || '').trim()
+    reporterContact: String(raw.reporterContact || '').trim(),
+    reporterIp: clientMeta.ip || '',
+    reporterLocation: clientMeta.location || '',
+    reporterDevice: clientMeta.device || ''
   }
   const newNode = push(dbRef(db, 'pending_reports'))
   await set(newNode, pendingPayload)
@@ -813,10 +840,19 @@ export async function approvePendingReport(pendingId, editedData) {
   for (const p of publicPayload.platKeys) {
     updates[`plat_index/${p}/${approvedId}`] = true
   }
-  if (editedData.reporterName || editedData.reporterContact) {
+  if (
+    editedData.reporterName ||
+    editedData.reporterContact ||
+    editedData.reporterIp ||
+    editedData.reporterLocation ||
+    editedData.reporterDevice
+  ) {
     updates[`reporter_archive/${approvedId}`] = {
       reporterName: String(editedData.reporterName || '').trim(),
       reporterContact: String(editedData.reporterContact || '').trim(),
+      reporterIp: String(editedData.reporterIp || '').trim(),
+      reporterLocation: String(editedData.reporterLocation || '').trim(),
+      reporterDevice: String(editedData.reporterDevice || '').trim(),
       approvedAt: Date.now()
     }
   }

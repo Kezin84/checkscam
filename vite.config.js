@@ -47,6 +47,19 @@ function localApiNotifyPlugin(env) {
       enhanceRes(res)
       await notifySearchHandler(req, res)
     })
+
+    server.middlewares.use('/api/client-meta', (req, res) => {
+      enhanceRes(res)
+      const ip =
+        String(req.headers?.['cf-connecting-ip'] || '').trim() ||
+        String(req.headers?.['x-forwarded-for'] || '')
+          .split(',')[0]
+          .trim() ||
+        req.socket?.remoteAddress ||
+        ''
+      res.setHeader('Cache-Control', 'no-store')
+      res.status(200).json({ ok: true, ip, location: '', device: '' })
+    })
   }
 
   return {

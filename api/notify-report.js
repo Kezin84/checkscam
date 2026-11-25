@@ -39,7 +39,7 @@ function resolveAdminUrl(req) {
   return ''
 }
 
-function formatTelegramMessage({ reportId, report, adminUrl }) {
+function formatTelegramMessage({ reportId, report, adminUrl, reporterIp }) {
   const lines = ['🚨 <b>ĐƠN TỐ CÁO MỚI CHỜ DUYỆT</b>']
 
   const incidents = Array.isArray(report.incidents) && report.incidents.length > 0 ? report.incidents : null
@@ -111,6 +111,12 @@ function formatTelegramMessage({ reportId, report, adminUrl }) {
     const reporterParts = [report.reporterName, report.reporterContact].filter(Boolean)
     lines.push('')
     lines.push(`🙋 <b>Người gửi:</b> ${escapeHtml(reporterParts.join(' · '))}`)
+  }
+
+  const ipText = String(reporterIp || report.reporterIp || '').trim()
+  if (ipText) {
+    if (!report.reporterName && !report.reporterContact) lines.push('')
+    lines.push(`🌐 <b>IP người tố cáo:</b> <code>${escapeHtml(ipText)}</code>`)
   }
 
   const images = Array.isArray(report.evidenceImages) ? report.evidenceImages.filter(Boolean) : []
@@ -206,10 +212,19 @@ export default async function handler(req, res) {
     return res.status(400).json({ ok: false, error: 'Empty report payload' })
   }
 
+  const reporterIp =
+    String(req.headers?.['cf-connecting-ip'] || '').trim() ||
+    String(req.headers?.['x-forwarded-for'] || '')
+      .split(',')[0]
+      .trim() ||
+    req.socket?.remoteAddress ||
+    ''
+
   const text = formatTelegramMessage({
     reportId,
     report,
-    adminUrl: resolveAdminUrl(req)
+    adminUrl: resolveAdminUrl(req),
+    reporterIp
   })
 
   try {

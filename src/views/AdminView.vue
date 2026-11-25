@@ -165,7 +165,12 @@ async function handleSaveReportForm(payload) {
   actionBusy.value = true
   try {
     if (editingMode.value === 'approve-edit' && editingItem.value?.id) {
-      await approvePendingReport(editingItem.value.id, payload)
+      await approvePendingReport(editingItem.value.id, {
+        ...payload,
+        reporterIp: payload.reporterIp || editingItem.value.reporterIp || '',
+        reporterLocation: payload.reporterLocation || editingItem.value.reporterLocation || '',
+        reporterDevice: payload.reporterDevice || editingItem.value.reporterDevice || ''
+      })
       notify(`Đã cập nhật và duyệt công khai "${payload.subjectName}".`)
     } else if (editingMode.value === 'edit-report' && editingItem.value?.id) {
       await saveApprovedReport(payload, editingItem.value.id)
@@ -619,6 +624,9 @@ const securityRulesJson = computed(() => {
                     <span class="label">Thông tin người gửi (ẩn với công khai):</span>
                     <span class="mono">
                       {{ item.reporterName || 'Ẩn danh' }} · {{ item.reporterContact || 'Không để lại liên hệ' }}
+                      <template v-if="item.reporterIp"> · IP: <strong>{{ item.reporterIp }}</strong></template>
+                      <template v-if="item.reporterLocation"> · {{ item.reporterLocation }}</template>
+                      <template v-if="item.reporterDevice"> · {{ item.reporterDevice }}</template>
                     </span>
                   </div>
                 </div>

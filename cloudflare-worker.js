@@ -421,7 +421,7 @@ function truncateText(text = '', maxLen = 600) {
   return `${clean.slice(0, maxLen - 1)}…`
 }
 
-function formatTelegramMessage({ reportId, report, adminUrl }) {
+function formatTelegramMessage({ reportId, report, adminUrl, clientMeta }) {
   const lines = ['🚨 <b>ĐƠN TỐ CÁO MỚI CHỜ DUYỆT</b>']
 
   const incidents =
@@ -494,6 +494,16 @@ function formatTelegramMessage({ reportId, report, adminUrl }) {
     const reporterParts = [report.reporterName, report.reporterContact].filter(Boolean)
     lines.push('')
     lines.push(`🙋 <b>Người gửi:</b> ${escapeHtml(reporterParts.join(' · '))}`)
+  }
+
+  const reporterIp = String(clientMeta?.ip || report.reporterIp || '').trim()
+  const reporterLocation = String(clientMeta?.location || report.reporterLocation || '').trim()
+  const reporterDevice = String(clientMeta?.device || report.reporterDevice || '').trim()
+  if (reporterIp || reporterLocation || reporterDevice) {
+    if (!report.reporterName && !report.reporterContact) lines.push('')
+    if (reporterIp) lines.push(`🌐 <b>IP người tố cáo:</b> <code>${escapeHtml(reporterIp)}</code>`)
+    if (reporterLocation) lines.push(`🌍 <b>Vị trí:</b> ${escapeHtml(reporterLocation)}`)
+    if (reporterDevice) lines.push(`📱 <b>Thiết bị:</b> ${escapeHtml(reporterDevice)}`)
   }
 
   const images = Array.isArray(report.evidenceImages) ? report.evidenceImages.filter(Boolean) : []
@@ -592,10 +602,17 @@ async function handleNotifyReport(request, env, url) {
     return jsonResponse({ ok: false, error: 'Empty report payload' }, 400)
   }
 
+  const clientMeta = {
+    ip: extractClientIp(request),
+    location: formatLocationFromCf(request.cf),
+    device: parseDeviceSummary(request.headers.get('User-Agent') || '')
+  }
+
   const text = formatTelegramMessage({
     reportId,
     report,
-    adminUrl: `${url.origin}/admin`
+    adminUrl: `${url.origin}/admin`,
+    clientMeta
   })
 
   const reportThreadId = parseTelegramThreadId(env?.TELEGRAM_REPORT_THREAD_ID)
@@ -948,6 +965,19 @@ export default {
 
     if (pathname === '/api/notify-search' || pathname === '/api/notify-search/') {
       return handleNotifySearch(request, env, url)
+    }
+
+    if (pathname === '/api/client-meta' || pathname === '/api/client-meta/') {
+      return jsonResponse(
+        {
+          ok: true,
+          ip: extractClientIp(request),
+          location: formatLocationFromCf(request.cf),
+          device: parseDeviceSummary(request.headers.get('User-Agent') || '')
+        },
+        200,
+        { 'Cache-Control': 'no-store' }
+      )
     }
 
     if (pathname === '/api/seo-cache-purge' || pathname === '/api/seo-cache-purge/') {
